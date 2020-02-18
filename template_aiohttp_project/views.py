@@ -2,6 +2,7 @@ import jinja2
 import aiohttp_jinja2
 from collections import Counter
 from models import Person
+from aiohttp import web, WSMsgType
 from aiohttp.web import Request, Response, json_response
 from db import Session
 from utils import row2dict
@@ -42,3 +43,19 @@ async def getByName(request):
     if name != "Error":
         person = Person.getByName(name)
         return json_response({"code": 200, "data": row2dict(person)})
+
+
+async def websocket_handler(request):
+    ws = web.WebSocketResponse()
+    await ws.prepare(request)
+    async for msg in ws:
+        if msg.type == WSMsgType.TEXT:
+            if msg.data == 'close':
+                await ws.close()
+            else:
+                await ws.send_str(msg.data + "/answer")
+        elif msg.type == WSMsgType.ERROR:
+            print("ws connection closed with exception %s" % ws.exception())
+    print("websocket connection closed")
+
+    return ws
