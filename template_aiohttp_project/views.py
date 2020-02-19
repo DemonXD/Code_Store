@@ -5,9 +5,8 @@ from models import Person
 from aiohttp import web, WSMsgType
 from aiohttp.web import Request, Response, json_response
 from db import Session
-from utils import row2dict
+from utils import row2dict, pushdata
 from sqlalchemy.exc import IntegrityError
-
 
 
 async def index(request):
@@ -46,16 +45,21 @@ async def getByName(request):
 
 
 async def websocket_handler(request):
-    ws = web.WebSocketResponse()
-    await ws.prepare(request)
-    async for msg in ws:
-        if msg.type == WSMsgType.TEXT:
-            if msg.data == 'close':
-                await ws.close()
-            else:
-                await ws.send_str(msg.data + "/answer")
-        elif msg.type == WSMsgType.ERROR:
-            print("ws connection closed with exception %s" % ws.exception())
-    print("websocket connection closed")
+    resp = web.WebSocketResponse()
+    available = resp.can_prepare(request)
 
-    return ws
+    await resp.prepare(request)
+    await resp.send_str('Welcome!!!')
+
+    try:
+        loop = request.app['loop']
+        request.app['async_tasks'].append(loop.create_task(pushdata(resp)))
+        async for msg in resp:
+            if msg.type == web.WSMsgType.TEXT:
+                pass
+            else:
+                return resp
+        return resp
+
+    finally:
+        print('Someone disconnected.')
