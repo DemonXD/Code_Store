@@ -1,5 +1,5 @@
 from aiohttp.web import RouteTableDef
-from views import (
+from .views import (
     index,
     greet_user,
     getAll,

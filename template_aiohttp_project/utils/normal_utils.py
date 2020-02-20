@@ -27,11 +27,3 @@ class PubSubChannel:
             print(f"Failed to remove {observer}")
     def notify(self):
         pass
-
-
-async def pushdata(ws):
-    count = 0
-    while True:
-        count += 1
-        await asyncio.sleep(2)
-        await ws.send_str(f"{count}")
