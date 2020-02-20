@@ -131,3 +131,7 @@ dmypy.json
 
 # vscode
 .vscode/
+
+# txt file without requirements.txt
+*.txt
+!requirements.txt

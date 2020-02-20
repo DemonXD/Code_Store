@@ -1,0 +1,9 @@
+sanic==19.12.2
+sanic-cors==0.10.0
+sanic-session==0.6.0
+asyncpg==0.20.1
+peewee==2.10.2
+peewee-async==0.5.12
+aiopg==1.0.0
+click==7.0
+python-dotenv==0.11.0
