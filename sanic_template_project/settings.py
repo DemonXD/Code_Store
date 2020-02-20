@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(".env")
 
+
 class CONFIG:
     CSRF_ENABLED = True
     SECRET_KEY = os.environ.get("SECRET_KEY")
@@ -16,6 +17,9 @@ class CONFIG:
 
     REDIS_BROKER = "127.0.0.1:6379"
     REDIS_RESULT = "127.0.0.1:6379"
+
+    # config db type: sqlite / postgresql
+    DB_BACKEND = "sqlite"
 
 
 class DEVELOPMENTCONFIG(CONFIG):

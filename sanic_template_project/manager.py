@@ -13,8 +13,7 @@ from apps.API.models import (
     DeviceServiceData
 )
 from asyncpg import create_pool
-from utils import CreateTable, CreatedTable
-
+from utils.table_util import CreateTable
 
 
 ###########################################
