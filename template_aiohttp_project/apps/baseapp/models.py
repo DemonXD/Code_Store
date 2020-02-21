@@ -15,7 +15,7 @@ class Person(BaseModel):
     @staticmethod
     def getAll():
         persons = Person.select()
-        assert persons != []
+        assert len(persons) != 0
         return persons
 
     @staticmethod
@@ -27,4 +27,3 @@ class Person(BaseModel):
 
 class Temperature(BaseModel):
     value = IntegerField()
-

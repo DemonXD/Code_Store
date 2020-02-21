@@ -24,10 +24,7 @@ async def greet_user(request):
         with db.atomic() as transaction:  # Opens new transaction.
             try:
                 person = Person.create(name=data['name'],lastname=data['lastname'])
-            except Exception:
-                # Because this block of code is wrapped with "atomic", a
-                # new transaction will begin automatically after the call
-                # to rollback().
+            except Exception as e:
                 transaction.rollback()
                 return json_response({"code": 4000, "msg": f"{e}", "data": ""}, status=400)
             return json_response({"code": 2000, "msg": "OK", "data": model_to_dict(person)}, status=200)

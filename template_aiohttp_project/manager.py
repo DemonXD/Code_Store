@@ -8,6 +8,7 @@ import aiohttp_jinja2
 import settings
 from aiohttp import web
 from apps.baseapp.urls import init_routers
+from db import start_mqtt, migrate_router
 
 async def generate_data():
     while True:
@@ -17,6 +18,7 @@ async def generate_data():
 async def start_backend_task(app):
     app['loop'] = loop = asyncio.get_event_loop()
     app['async_tasks'].append(loop.create_task(generate_data()))
+    app['async_tasks'].append(loop.create_task(start_mqtt(app)))
 
 async def stop_backend_task(app):
     [x.cancel() for x in app['async_tasks']]
@@ -60,6 +62,14 @@ def init(db):
         e = None
 
 @click.command()
+def makemigrations():
+    migrate_router.create("allmigrations")
+
+@click.command()
+def migrate():
+    migrate_router.run()
+
+@click.command()
 def shell():
     strs = ""
     for eachapp in settings.INSTALL_APPS:
@@ -72,6 +82,10 @@ def runserver():
     web.run_app(init_app(), port=10086)
 
 run.add_command(init)
+
+# migrations 功能待完善
+# run.add_command(makemigrations)
+# run.add_command(migrate)
 run.add_command(shell)
 run.add_command(runserver)
 
