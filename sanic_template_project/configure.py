@@ -1,11 +1,13 @@
-from peewee_async import PooledPostgresqlDatabase
-from utils.async_sqlite import SqliteDatabase
+# from peewee_async import PooledPostgresqlDatabase
+from peewee import SqliteDatabase, PostgresqlDatabase
+# from utils.async_sqlite import SqliteDatabase
 import settings
 
 if settings.CONFIG.DB_BACKEND == "sqlite":
     db = SqliteDatabase("testasyncsqlite.db")
 elif settings.CONFIG.DB_BACKEND == "postgresql":
-    db = PooledPostgresqlDatabase(
+    # db = PooledPostgresqlDatabase(
+    db = PostgresqlDatabase(
         user=settings.CONFIG.DB_USER,
         password=settings.CONFIG.DB_PASSWORD,
         host=settings.CONFIG.DB_HOST,
