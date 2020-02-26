@@ -61,6 +61,7 @@ class AStar:
         :param map2d:       地图
         :param obstruction: 障碍物标记
         '''
+        self.start = start
         self.start_x, self.start_y = start
         self.end = end
         self.map2d = map2d
@@ -175,7 +176,7 @@ class AStar:
                 elif node_Q.get_F(self.end) < node_openlist.get_F(self.end):
                     self.upd_openlist(node_Q)
     
-    def start(self):
+    def run(self):
         node_start = Node(self.start_x, self.start_y, None)
         self.openlist[(self.start_x, self.start_y)] = node_start
         self.search()
@@ -199,7 +200,7 @@ class AStar:
 
 def get_per_dis(start, end, map2d):
     a_way = AStar(start, end, map2d)
-    a_way.start()
+    a_way.run()
     result_x, result_y, dis = a_way.paint()
     return result_x, result_y, dis
 
