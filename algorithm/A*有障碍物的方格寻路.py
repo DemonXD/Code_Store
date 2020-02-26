@@ -1,4 +1,4 @@
-from collections import *
+from itertools import permutations
 
 
 class Node:
@@ -79,7 +79,7 @@ class AStar:
         """
         该位置是否在地图内
         """
-        return 0 <= x << self.x_edge and 0 <= y < self.y_edge
+        return 0 <= x < self.x_edge and 0 <= y < self.y_edge
     
     def in_closelist(self, x, y):
         """
@@ -185,12 +185,45 @@ class AStar:
         node = self.answer
         result_x = []
         result_y = []
+        dis = 0
         while node is not None:
-            print((node.x, node.y), f"G={node.g}, H={node.h}, F={node.f}")
+            # print((node.x, node.y), f"G={node.g}, H={node.h}, F={node.f}")
             result_x.append(node.x)
             result_y.append(node.y)
+            if node.g > dis:
+                dis = node.g
             node = node.parent
-        return result_x, result_y
+        result_x.reverse()
+        result_y.reverse()
+        return result_x, result_y, dis
+
+def get_per_dis(start, end, map2d):
+    a_way = AStar(start, end, map2d)
+    a_way.start()
+    result_x, result_y, dis = a_way.paint()
+    return result_x, result_y, dis
+
+def result_way(alist, map2d):
+    p_start = alist[0]
+    p_end = alist[-1]
+    all_possible = [ [p_start] + list(x) + [p_end] for x in permutations(alist[1:-1])]
+    all_result = {}
+    for each_way in all_possible:
+        each_way_result = 0
+        each_way_points_x = []
+        each_way_points_y = []
+        for idx, _ in enumerate(each_way):
+            if idx < len(each_way)-1:
+                # print(f"each way start:end--{each_way[idx]}:{each_way[idx+1]}")
+                result_x, result_y, dis = get_per_dis(each_way[idx], each_way[idx+1], map2d)
+                each_way_result += dis
+                each_way_points_x += result_x
+                each_way_points_y += result_y
+        # print(f"{each_way},way:points{list(zip(each_way_points_x, each_way_points_y))}")
+        all_result[each_way_result] = [each_way_points_x, each_way_points_y]
+    min_one = min(list(all_result.keys()))
+    return all_result[min_one]
+
 
 if __name__ == "__main__":
     map2d = [[0]*10 for i in range(14)]
@@ -198,11 +231,7 @@ if __name__ == "__main__":
         for y in range(2, 8):
             map2d[x][y] = 1
 
-    start, end = (0, 0), (4, 7)
-    a_way = AStar(start, end, map2d)
-    a_way.start()
-    result_x, result_y = a_way.paint()
-
+    result_x, result_y = result_way([(0, 0), (4, 7), (12, 3), (0, 9)], map2d)
     # from pprint import pprint
     # pprint(map2d)
     from matplotlib import pyplot as plt
