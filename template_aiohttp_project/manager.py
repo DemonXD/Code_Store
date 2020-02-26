@@ -52,11 +52,12 @@ def init(db):
                     __import__(models_)
                     modules = sys.modules[models_]
                     for name, obj in inspect.getmembers(modules, inspect.isclass):
-                        if models_ in str(obj):
+                        if models_ in str(obj.__dict__['__module__']):
                             # create table code here
                             obj.create_table(True)
                             sys.stdout.write(f"{name},{str(obj)}, has been created\n")
-                except Exception:
+                except Exception as e:
+                    print(e)
                     raise ValueError(f"No Such APP:{eachapp} EXISTED!")
         else:
             raise NameError("Parameter Error, Please use 'db'!")
