@@ -6,9 +6,9 @@ Features：
 - 数据库连接(SQLite/PostgreSQL)
 - 自动创建数据库表(暂不支持migrate)
 - Shell 功能，所有app下的model模型导入目前还有问题
+- startapp命令(创建新的app)
 
 TODO:
-- startapp(创建新app模版文件)
 - 完善Shell功能
 - 支持migrate，表字段结构更改，自动同步到数据库
 

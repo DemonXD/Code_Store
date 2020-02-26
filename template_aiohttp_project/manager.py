@@ -78,11 +78,25 @@ def shell():
     os.system(f'ipython -i -c "{strs}"')
 
 @click.command()
+@click.argument('appname')
+def startapp(appname):
+    try:
+        os.system(f"mkdir -p apps/{appname}")
+        os.system(f'touch apps/{appname}/__init__.py')
+        os.system(f'touch apps/{appname}/models.py')
+        os.system(f'touch apps/{appname}/urls.py')
+        os.system(f'touch apps/{appname}/views.py')
+    except Exception as e:
+        print(e)
+        sys.exit(0)
+
+
+@click.command()
 def runserver():
     web.run_app(init_app(), port=10086)
 
 run.add_command(init)
-
+run.add_command(startapp)
 # migrations 功能待完善
 # run.add_command(makemigrations)
 # run.add_command(migrate)
