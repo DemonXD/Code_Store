@@ -6,7 +6,6 @@ load_dotenv(".env")
 
 INSTALL_APPS = [
     "apps.baseapp",
-    "apps.secondapp"
 ]
 
 

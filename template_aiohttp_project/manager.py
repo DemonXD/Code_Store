@@ -47,17 +47,20 @@ def init(db):
     try:
         if db == 'db':
             for eachapp in settings.INSTALL_APPS:
-                models_ = f'{eachapp}.models'
-                __import__(models_)
-                modules = sys.modules[models_]
-                for name, obj in inspect.getmembers(modules, inspect.isclass):
-                    if models_ in str(obj):
-                        # create table code here
-                        obj.create_table(True)
-                        sys.stdout.write(f"{name},{str(obj)}, has been created\n")
+                try:
+                    models_ = f'{eachapp}.models'
+                    __import__(models_)
+                    modules = sys.modules[models_]
+                    for name, obj in inspect.getmembers(modules, inspect.isclass):
+                        if models_ in str(obj):
+                            # create table code here
+                            obj.create_table(True)
+                            sys.stdout.write(f"{name},{str(obj)}, has been created\n")
+                except Exception:
+                    raise ValueError(f"No Such APP:{eachapp} EXISTED!")
         else:
-            raise ParameterError("Parameter Error, Please use 'db'!")
-    except ParameterError as e:
+            raise NameError("Parameter Error, Please use 'db'!")
+    except Exception as e:
         print(e)
         e = None
 
