@@ -3,27 +3,54 @@ Features：
 - 简单的restful api接口
 - 简单的首页内容展示
 - 基于websocket的后段持续推送信息
+- 数据库连接(SQLite/PostgreSQL)
+- 自动创建数据库表(暂不支持migrate)
+- Shell 功能，所有app下的model模型导入目前还有问题
+
+TODO:
+- startapp(创建新app模版文件)
+- 完善Shell功能
+- 支持migrate，表字段结构更改，自动同步到数据库
 
 项目结构：
 ```
+.
 ├── README.md
 ├── aiohttp_example
 │   ├── web_ws.py
 │   └── websocket.html
-├── db.py                   # 数据库连接
-├── main.py                 # 项目主入口
-├── models.py               # ORM模型
+├── apps
+│   ├── __init__.py
+│   ├── baseapp
+│   │   ├── __init__.py
+│   │   ├── models.py
+│   │   ├── urls.py
+│   │   └── views.py
+│   └── secondapp
+│       ├── __init__.py
+│       └── models.py
+├── db.py
+├── manager.py                  # 项目主入口
+├── migrations                  # 迁移功能未完成
 ├── requirements.txt
-├── signalSlotPattern.py
+├── settings.py                 # 配置文件
 ├── templates
-│   └── index.html          # 主页html文件
-├── test.db                 # SQLite数据库文件
-├── urls.py                 # 路由注册
-├── utils.py                # 工具库
-└── views.py                # 视图逻辑
+│   └── index.html              # example主页
+└── utils
+    ├── __init__.py
+    ├── ackdict.py
+    ├── async_sqlite.py
+    ├── mqtt_subscriber.py
+    ├── normal_utils.py
+    └── signalSlotPattern.py
+
 ```
 
 ### 使用说明
-- `pip install -r requirements.txt`
-- `python main.py`
+- 配置`settings.py`中的`DB_BACKEND`，目前支持`sqlite/PostgreSQL`
+- 配置`INSTALL_APPS`中加上创建的app包路径,例如`apps.baseapp`
+- 执行项目前初始化db，`python manager.py init db`
+- 执行`python manager.py shell`，进入shell模式，并自动导入model模型(待完善)
+- 执行`python manager.py runserver` 开启服务
 - 打开浏览器，输入http://127.0.0.1:10086
+
