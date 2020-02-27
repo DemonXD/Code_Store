@@ -8,8 +8,7 @@ from aiohttp import web, WSMsgType
 from aiohttp.web import Request, Response, json_response
 from playhouse.shortcuts import model_to_dict
 from playhouse.signals import post_save
-from syncer import sync
-
+from aiohttp_session import get_session
 
 async def index(request):
     return aiohttp_jinja2.render_template(
@@ -33,6 +32,7 @@ async def greet_user(request):
 
 
 async def getAll(request):
+    session = await get_session(request) # aiohttp_session get session from request
     try:
         person_list = [model_to_dict(x) for x in Person.getAll()]
     except AssertionError:

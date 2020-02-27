@@ -8,6 +8,7 @@ Features：
     - models中不要创建和数据库表无关的类(后期优化自动识别的条件)
 - Shell 功能，所有app下的model模型导入目前还有问题
 - startapp命令(创建新的app)
+- aiohttp_session 支持session
 
 TODO:
 - 完善Shell功能

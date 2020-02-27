@@ -1,5 +1,6 @@
 aiohttp==3.6.2
 aiohttp-session==2.9.0
+cryptography==2.8
 jinja2==2.11.1
 aiohttp-jinja2==1.2.0
 peewee==2.10.2

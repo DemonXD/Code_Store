@@ -6,7 +6,10 @@ import asyncio
 import jinja2
 import aiohttp_jinja2
 import settings
+import base64
 from aiohttp import web
+from aiohttp_session import setup as sess_setup
+from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from apps.baseapp.urls import init_routers
 from db import start_mqtt, migrate_router
 
@@ -24,11 +27,13 @@ async def stop_backend_task(app):
     [x.cancel() for x in app['async_tasks']]
 
 async def init_app() -> web.Application:
+    secret_key = base64.urlsafe_b64decode(settings.CONFIG.SECRET_KEY)
     app = web.Application()
     app['async_tasks'] = []
     await init_routers(app)
     app.on_startup.append(start_backend_task)
     app.on_shutdown.append(stop_backend_task)
+    sess_setup(app, EncryptedCookieStorage(secret_key))
     aiohttp_jinja2.setup(
         app,
         loader=jinja2.FileSystemLoader(os.path.join(os.getcwd(), "templates"))
