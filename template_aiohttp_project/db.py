@@ -43,4 +43,4 @@ async def start_mqtt(app):
     )
 
 async def redis_pool():
-    return await create_pool(os.environ.get("REDIS_DB"))
+    return await create_pool(settings.CONFIG.REDIS_DB)
