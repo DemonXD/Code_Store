@@ -11,3 +11,4 @@ python-dotenv==0.11.0
 aiosqlite==0.11.0
 ipython==7.11.1
 paho-mqtt==1.5.0
+aioredis==1.3.1

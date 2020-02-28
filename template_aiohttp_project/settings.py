@@ -20,8 +20,13 @@ class CONFIG:
     DB_PORT = int(os.environ.get("DB_PORT"))
     DB_DATABASE = os.environ.get("DB_DATABASE")
 
-    REDIS_BROKER = "127.0.0.1:6379/0"
-    REDIS_RESULT = "127.0.0.1:6379/1"
+    MQTT_USERNAME = os.environ.get('MQTT_USERNAME')
+    MQTT_PASSWORD = os.environ.get('MQTT_PASSWORD')
+    MQTT_HOST = os.environ.get('MQTT_HOST')
+    MQTT_PORT = int(os.environ.get('MQTT_PORT'))
+    MQTT_TOPIC = os.environ.get('MQTT_TOPIC')
+
+    REDIS_DB = os.environ.get("REDIS_DB")
 
     # config db type: sqlite / postgresql
     DB_BACKEND = "sqlite"

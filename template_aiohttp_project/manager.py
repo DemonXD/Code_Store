@@ -10,8 +10,9 @@ import base64
 from aiohttp import web
 from aiohttp_session import setup as sess_setup
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
+from aiohttp_session.redis_storage import RedisStorage
 from apps.baseapp.urls import init_routers
-from db import start_mqtt, migrate_router
+from db import start_mqtt, migrate_router, redis_pool
 
 async def generate_data():
     while True:
@@ -33,7 +34,9 @@ async def init_app() -> web.Application:
     await init_routers(app)
     app.on_startup.append(start_backend_task)
     app.on_shutdown.append(stop_backend_task)
-    sess_setup(app, EncryptedCookieStorage(secret_key))
+    # sess_setup(app, EncryptedCookieStorage(secret_key))
+    redis = await redis_pool()
+    sess_setup(app, RedisStorage(redis))
     aiohttp_jinja2.setup(
         app,
         loader=jinja2.FileSystemLoader(os.path.join(os.getcwd(), "templates"))

@@ -5,6 +5,8 @@ from playhouse.signals import Model as sModel
 # from utils.async_sqlite import SqliteDatabase
 from utils.mqtt_subscriber import MQTTSubscriber
 from peewee_migrate import Router
+from aioredis import create_pool
+
 
 if settings.CONFIG.DB_BACKEND == "sqlite":
     db = SqliteDatabase("test.db")
@@ -33,9 +35,12 @@ class BaseModel(sModel):
 async def start_mqtt(app):
     app['mqtt_client'] = mqtt_client = MQTTSubscriber()
     mqtt_client.start(
-        os.environ.get('MQTT_USERNAME'),
-        os.environ.get('MQTT_PASSWORD'),
-        os.environ.get('MQTT_HOST'),
-        int(os.environ.get('MQTT_PORT')),
-        os.environ.get('MQTT_TOPIC')
+        settings.CONFIG.MQTT_USERNAME,
+        settings.CONFIG.MQTT_PASSWORD,
+        settings.CONFIG.MQTT_HOST,
+        settings.CONFIG.MQTT_PORT,
+        settings.CONFIG.MQTT_TOPIC
     )
+
+async def redis_pool():
+    return await create_pool(os.environ.get("REDIS_DB"))
