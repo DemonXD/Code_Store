@@ -25,7 +25,8 @@ async def start_backend_task(app):
     app['async_tasks'].append(loop.create_task(start_mqtt(app)))
 
 async def stop_backend_task(app):
-    [x.cancel() for x in app['async_tasks']]
+    all_tasks = [x.cancel() for x in app['async_tasks']]
+    assert all(all_tasks) == False
 
 async def init_app() -> web.Application:
     secret_key = base64.urlsafe_b64decode(settings.CONFIG.SECRET_KEY)
