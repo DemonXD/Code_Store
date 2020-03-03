@@ -135,3 +135,7 @@ dmypy.json
 # txt file without requirements.txt
 *.txt
 !requirements.txt
+
+
+# Mac OS DS_Store
+.DS_Store
