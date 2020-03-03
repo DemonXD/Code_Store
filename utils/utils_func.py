@@ -18,3 +18,13 @@ def separated_list_with_n(list, width):
         separated list with the width you want
     '''
     return [list[x:x+width] for x in range(0, len(list), width)]
+
+
+def asyncDecorator():
+    def wrapper(func):
+        @functools.wraps(func)
+        async def wrapped(*args):
+             # Some fancy foo stuff
+            return await func(*args)
+        return wrapped
+    return wrapper
