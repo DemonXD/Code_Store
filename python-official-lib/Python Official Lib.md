@@ -1,9 +1,3 @@
----
-title: Python Official Lib
-created: '2020-03-04T00:46:36.614Z'
-modified: '2020-03-04T06:44:33.209Z'
----
-
 # Python Official Lib
 
 [python3 基础库传送门](https://docs.python.org/zh-cn/3/library/)
