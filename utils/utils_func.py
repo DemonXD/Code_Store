@@ -1,3 +1,6 @@
+import time
+import functools
+
 def CMlist(list1, list2):
     l = len(list1)  + len(list2)
     target_list = []
@@ -28,3 +31,23 @@ def asyncDecorator():
             return await func(*args)
         return wrapped
     return wrapper
+
+def MemCache(func):
+    existval = {}
+    @functools.wraps(func)
+    def wrapped(*args):
+        # Some fancy foo stuff
+        if str(args) not in existval:
+            existval[str(args)] = func(*args)
+        return existval[str(args)]
+    return wrapped
+
+def timecost(func):
+    @functools.wraps(func)
+    def timer(*args):
+        start = time.time()
+        value = func(*args)
+        end = time.time()
+        print(f"{func.__name__} cost: {round((end-start), 3)}")
+        return value
+    return timer

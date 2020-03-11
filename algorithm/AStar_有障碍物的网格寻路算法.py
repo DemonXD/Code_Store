@@ -2,7 +2,7 @@
 基于A*，方格地图有障碍物的搜索算法
 '''
 from itertools import permutations
-
+from utils.utils_func import MemCache, timecost
 
 class Node:
     '''
@@ -201,12 +201,14 @@ class AStar:
         result_y.reverse()
         return result_x, result_y, dis
 
+@MemCache
 def get_per_dis(start, end, map2d):
     a_way = AStar(start, end, map2d)
     a_way.run()
     result_x, result_y, dis = a_way.paint()
     return result_x, result_y, dis
 
+@timecost
 def result_way(alist, map2d):
     p_start = alist[0]
     p_end = alist[-1]
@@ -228,44 +230,3 @@ def result_way(alist, map2d):
     min_one = min(list(all_result.keys()))
     return all_result[min_one]
 
-
-if __name__ == "__main__":
-    map2d = [[0]*10 for i in range(14)]
-    for x in [2, 3, 6, 7, 10, 11]:
-        for y in range(2, 8):
-            map2d[x][y] = 1
-
-    result_x, result_y = result_way([(0, 0), (4, 7), (12, 3), (0, 9)], map2d)
-    # from pprint import pprint
-    # pprint(map2d)
-    from matplotlib import pyplot as plt
-    shelf_x = []
-    shelf_y = []
-    way_x = []
-    way_y = []
-    for index_x, idx in enumerate(map2d):
-        for index_y, idy in enumerate(idx):
-            if map2d[index_x][index_y] == 1:
-                shelf_x.append(index_x)
-                shelf_y.append(index_y)
-            else:
-                way_x.append(index_x)
-                way_y.append(index_y)
-    plt.figure(figsize=(10, 8))
-    plt.title("store map2d")
-    # 散点图
-    plt.scatter(way_x, way_y, marker='*', c='b', s=10 , alpha=0.5)
-    plt.scatter(shelf_x, shelf_y, marker='*', c='r', s=10, alpha=0.5)
-    # 连线图
-    plt.plot(result_x, result_y, linewidth=2, color='blue', marker='D')
-    # plt.plot(x_label, y_label, label="2d map for store",
-    #          linewidth=3, color='b', marker='0',
-    #          markerfacecolor='blue', markersize=15)
-    plt.xlabel('x length')
-    plt.ylabel('y length')
-    for a, b in zip(way_x, way_y):
-        plt.text(a, b, (a, b), ha='center', va='bottom', fontsize=5)
-
-
-    plt.legend()
-    plt.show()
