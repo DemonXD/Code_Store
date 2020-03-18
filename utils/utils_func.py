@@ -32,15 +32,33 @@ def asyncDecorator():
         return wrapped
     return wrapper
 
-def MemCache(func):
-    existval = {}
-    @functools.wraps(func)
-    def wrapped(*args):
-        # Some fancy foo stuff
-        if str(args) not in existval:
-            existval[str(args)] = func(*args)
-        return existval[str(args)]
-    return wrapped
+def dictcache(duration = -1):
+    _cache = {}
+    def _memoize(function):
+        def _is_obsolete(entry, duration):
+            if duration == -1: #永不过期
+                return False
+            return time.time() - entry['time'] > duration
+
+        def _compute_key(function, args, kw):
+            '''序列化并求其哈希值'''
+            key = pickle.dumps((function.__name__, args, kw))
+            return hashlib.sha1(key).hexdigest()
+
+        @functools.wraps(function)
+        def __memoize(*args, **kw):
+            key = _compute_key(function, args, kw)
+            if key in _cache:
+                if _is_obsolete(_cache[key], duration) is False:
+                    return _cache[key]['value']
+            result = function(*args, **kw)
+            _cache[key] = {
+                'value' : result,
+                'time'  : time.time()
+            }
+            return _cache[key]['value']
+        return __memoize
+    return _memoize
 
 def timecost(func):
     @functools.wraps(func)
