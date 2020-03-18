@@ -1,4 +1,6 @@
 import time
+import hashlib
+import pickle
 import functools
 
 def CMlist(list1, list2):
