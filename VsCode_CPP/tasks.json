@@ -1,19 +1,23 @@
-// See https://go.microsoft.com/fwlink/?LinkId=733558
-// for the documentation about the tasks.json format
 {
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build",
+            "label": "g++",
             "type": "shell",
             // 编译参数 g++ -g ${file} -o ${fileDirname}${fileBasenameNoExtension}.exe
             "windows": {
                 "command": "g++",
                 "args": [
-                    "-W",
+                    "-g",
+                    "-std=c++11",
                     "\"${file}\"",
+                    "-L",
+                    "\"D:\\boost_1_72_0\"",
                     "-o",
                     "\"${fileDirname}\\${fileBasenameNoExtension}.exe\"",
+                    "-lpthread",
+                    "-lboost_system",
+                    "-lboost_thread",
                     "-v"
                 ]
             },

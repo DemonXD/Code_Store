@@ -8,13 +8,14 @@
             // 配置名称，在启动配置下拉菜单中显示
             "name": "(gdb) Launch", 
             // 调试会话开始前要运行的任务
-            "preLaunchTask": "build", 
+            "preLaunchTask": "g++", 
             // 配置类型
             "type": "cppdbg", 
             // 请求配置类型，可以为启动（launch）或附加（attach）
             "request": "launch", 
             // 将要进行调试的程序的路径
-            "program": "${fileDirname}/${fileBasenameNoExtension}.exe", 
+            // "program": "${fileDirname}/${fileBasenameNoExtension}.exe", 
+            "program": "${file}.exe", 
             // 程序调试时传递给程序的命令行参数，一般设为空即可
             "args": [], 
             // 设为true时程序将暂停在程序入口处，一般设置为false

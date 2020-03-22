@@ -9,9 +9,14 @@
                 "E:/Program Files/MinGW/mingw64/opt/include",
                 "E:/Program Files/MinGW/mingw64/opt/lib/libffi-3.2.1/include",
                 "E:/Program Files/MinGW/mingw64/x86_64-w64-mingw32/include",
+                "E:/Program Files/MinGW/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++",
+                "E:/Program Files/MinGW/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/x86_64-w64-mingw32",
+                "E:/Program Files/MinGW/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/backward",
                 "E:/Program Files/MinGW/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/include",
                 "E:/Program Files/MinGW/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/include-fixed",
-                "E:/Program Files/MinGW/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/install-tools/include"
+                "E:/Program Files/MinGW/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/install-tools/include",
+                "D:/boost_1_72_0",
+                "D:/boost_1_72_0/stage/lib"
             ],
             "defines": [
                 "_DEBUG",
@@ -26,15 +31,20 @@
                     "E:/Program Files/MinGW/mingw64/opt/include",
                     "E:/Program Files/MinGW/mingw64/opt/lib/libffi-3.2.1/include",
                     "E:/Program Files/MinGW/mingw64/x86_64-w64-mingw32/include",
+                    "E:/Program Files/MinGW/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++",
+                    "E:/Program Files/MinGW/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/x86_64-w64-mingw32",
+                    "E:/Program Files/MinGW/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/include/c++/backward",
                     "E:/Program Files/MinGW/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/include",
                     "E:/Program Files/MinGW/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/include-fixed",
-                    "E:/Program Files/MinGW/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/install-tools/include"
+                    "E:/Program Files/MinGW/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/install-tools/include",
+                    "D:/boost_1_72_0",
+                    "D:/boost_1_72_0/stage/lib"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""
             },
             "cStandard": "c11",
-            "cppStandard": "c++17"
+            "cppStandard": "c++11"
         }
     ],
     "version": 4
