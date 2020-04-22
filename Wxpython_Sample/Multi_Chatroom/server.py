@@ -1,170 +1,283 @@
-import socket
 import asyncio
+import json
+from struct import pack
 
 
-class EndSession(Exception):
-    """
-    自定义会话结束时的异常
-    """
-    pass
+# 消息頭長度 int or uint
+_MESSAGE_PREFIX_LENGTH = 4
+# 字節序
+_BYTE_ORDER = 'big'
 
 
-class CommandHandler:
-    """
-    命令处理类
-    """
-    def unknown(self, session, cmd):
-        '''响应未知命令'''
-        session.push('Unknown command: %s\n' % cmd)
+class Session(object):
 
-    def handle(self, session, line):
-        '''命令处理'''
-        if not line.strip():
-            return
-        parts = line.split(' ', 1)
-        cmd = parts[0]
+    def __init__(self):
+
+        self.clients = {}
+
+    def get(self, client):
+        # Get transport associated by client if exists.
+        if client not in self.clients:
+            return None
+        return self.clients[client]
+
+    def __contains__(self, client):
+        # Decide if client is online
+        return client in self.clients
+
+    def __repr__(self):
+        return "{}".format(self.clients)
+
+    __str__ = __repr__
+
+    def register(self, client, transport):
+        """Register client on session"""
+        if self.clients.get(client):
+            return False
+        self.clients[client] = transport
+        return True
+
+    def unregister(self, client):
+        """Unregister client on session"""
+        if client in self.clients:
+            del self.clients[client]
+
+
+class MetaHandler(type):
+    """Metaclass for MessageHandler"""
+    def __init__(cls, name, bases, _dict):
         try:
-            line = parts[1].strip()
-        except IndexError:
-            line = ''
-        meth = getattr(self, 'do_' + cmd, None)
+            cls._msg_handlers[cls.__msgtype__] = cls
+        except AttributeError:
+            cls._msg_handlers = {}
+
+
+class MessageHandler(metaclass=MetaHandler):
+
+    _session = Session()
+
+    def handle(self, msg, transport):
         try:
-            meth(session, line)
-        except TypeError:
-            self.unknown(session, cmd)
-
-
-class Room(CommandHandler):
-    """
-    包含多个用户的环境，负责基本的命令处理和广播
-    """
-    def __init__(self, server):
-        self.server = server
-        self.sessions = []
-    def add(self, session):
-        '''一个用户进入房间'''
-        self.sessions.append(session)
-    def remove(self, session):
-        '''一个用户离开房间'''
-        self.sessions.remove(session)
-    def broadcast(self, line):
-        '''向所有的用户发送指定消息'''
-        for session in self.sessions:
-            session.push(line)
-    def do_logout(self, session, line):
-        '''退出房间'''
-        raise EndSession("logout")
-
-
-class LoginRoom(Room):
-    """
-    刚登录的用户的房间
-    """
-    def add(self, session):
-        '''用户连接成功的回应'''
-        Room.add(self, session)
-        session.push('Connect Success')
-
-    def do_login(self, session, line):
-        '''登录命令处理'''
-        name = line.strip()
-        if not name:
-            session.push('UserName Empty')
-        elif name in self.server.users:
-            session.push('UserName Exist')
-        else:
-            session.name = name
-            session.enter(self.server.main_room)
-
-
-class LogoutRoom(Room):
-    """
-    用户退出时的房间
-    """
-    def add(self, session):
-        '''从服务器中移除'''
-        try:
-            del self.server.users[session.name]
+            _handler = self._msg_handlers[msg['type']]
         except KeyError:
-            pass
+            return ErrorHandler().handler(msg)
+
+        # Handling messages in a asyncio-Task
+        # Don’t directly create Task instances: use the async() function
+        # or the BaseEventLoop.create_task() method.
+
+        #return _handler().handle(msg, transport)
+        return asyncio.create_task(_handler().handle(msg, transport))
 
 
-class ChatRoom(Room):
+class ErrorHandler(MessageHandler):
     """
-    聊天用的房间
+    Unknown message type
     """
-    def add(self, session):
-        '''广播新用户进入'''
-        session.push('Login Success')
-        self.broadcast(session.name + ' has entered the room.\n')
-        self.server.users[session.name] = session
-        Room.add(self, session)
-    def remove(self, session):
-        '''广播用户离开'''
-        Room.remove(self, session)
-        self.broadcast(session.name + ' has left the room.\n')
-    def do_say(self, session, line):
-        '''客户端发送消息'''
-        self.broadcast(session.name + ': ' + line + '\n')
-    def do_look(self, session, line):
-        '''查看在线用户'''
-        session.push('Online Users:\n')
-        for other in self.sessions:
-            session.push(other.name + '\n')
+    __msgtype__ = 'unknown'
+
+    def handle(self, msg):
+        print("Unknown message type: {}".format(msg))
 
 
-class ChatSession():
+class Register(MessageHandler):
     """
-    负责数据的接受发送，维护用户会话
+    Registry handler for handling clients registry.
+
+    Message body should like this:
+
+        {'type': 'register', 'uid': 'unique-user-id'}
+
     """
-    def __init__(self, ):
-        self.server = server
+    __msgtype__ = 'register'
 
-        self.data = []
-        self.name = None
-        self.enter(LoginRoom(server))
+    def __init__(self):
+        self.current_uid = None
+        self.transport = None
 
-    async def data_handle(self, reader, writer):
-        data = await reader.read(100)
-        message = data.decode()
-        addr = writer.get_extra_info('peername')
-        print("Received %r from %r" % (message, addr))
+    async def handle(self, msg, transport):
 
-        print("Send: %r" % message)
-        writer.write(data)
-        await writer.drain()
+        self.current_uid = msg['uid']
+        self.transport = transport
 
-        # print("Close the client socket")
-        # writer.close()
+        print("registe uid: {}".format(self.current_uid))
+        # Register user in global session
+        if self._session.register(self.current_uid, self.transport):
+            msg_pack = "CONNECT"
+            self.transport.write(bytes(msg_pack, encoding='utf-8'))
+        else:
+            msg_pack = "EXIST"
+            self.transport.write(bytes(msg_pack, encoding='utf-8'))
 
-    def enter(self, room):
-        '''退出当前房间进入指定房间'''
+
+class COMMAND(MessageHandler):
+    """
+    accept client command
+    """
+    __msgtype__ = "cmd"
+
+    async def handle(self, msg, transport);
         pass
+    
 
-
-class ChatServer():
+class SendTextMsg(MessageHandler):
     """
-    聊天服务器
+    Send message to others.
+
+    Message body should like this:
+
+        {'type': 'text', 'sender': 'Jack', 'receiver': 'Rose', 'content': 'I love you forever'}
+
     """
-    def __init__(self, loop: asyncio.BaseEventLoop, host: str, port: str):
-        self.loop = loop
-        self.coro = asyncio.start_server()
-        self.loop.create_connection(host=host, port=port)
-        self.users = {}
-        self.main_room = ChatRoom(self)
+    __msgtype__ = 'text'  # Text message
 
-    def _run(self):
-        
+    async def handle(self, msg, _):
+        """
+        Send message to receiver if receiver is online, and
+        save message to mongodb. Otherwise save
+        message to mongodb as offline message.
+        :param msg:
+        :return: None
+        """
+        print("send data...{}".format(msg))
 
-    def run_server(self):
-        self._run()
+        transport = self._session.get(msg['receiver'])
+        msg_pack = json.dumps(msg)
+        msg_len = len(msg_pack)
+        if transport:
+            # Pack message as length-prifixed and send to receiver.
+            transport.write(pack("!I%ds" % msg_len, msg_len, bytes(msg_pack, encoding='utf-8')))
+
+
+class Unregister(MessageHandler):
+    """
+    Unregister user from global session
+
+    Message body should like this:
+
+        {'type': 'unregister', 'uid': 'unique-user-id'}
+
+    """
+    __msgtype__ = 'unregister'
+
+    async def handle(self, msg, _):
+        """Unregister user record from global session"""
+        self._session.unregister(msg['uid'])
+
+
+class myImProtocol(asyncio.Protocol):
+
+    _buffer = b''     # 數據緩衝Buffer
+    _msg_len = None   # 消息長度
+
+    def data_received(self, data):
+
+        while data:
+            data = self.process_data(data)
+
+    def process_data(self, data):
+        """
+        Called when some data is received.
+
+        This method must be implemented by subclasses
+
+        The argument is a bytes object.
+        """
+        self._buffer += data
+
+        # For store the rest data out-of a full message
+        _buffer = None
+
+        if self._msg_len is None:
+            # If buffer length < _MESSAGE_PREFIX_LENGTH return for more data
+            if len(self._buffer) < _MESSAGE_PREFIX_LENGTH:
+                return
+
+            # If buffer length >= _MESSAGE_PREFIX_LENGTH
+            self._msg_len = int.from_bytes(self._buffer[:_MESSAGE_PREFIX_LENGTH], byteorder=_BYTE_ORDER)
+
+            # The left bytes will be the message body
+            self._buffer = self._buffer[_MESSAGE_PREFIX_LENGTH:]
+
+        # Received full message
+        if len(self._buffer) >= self._msg_len:
+            # Call message_received to handler message
+            self.message_received(self._buffer[:self._msg_len])
+
+            # Left the rest of the buffer for next message
+            _buffer = self._buffer[self._msg_len:]
+
+            # Clean data buffer for next message
+            self._buffer = b''
+
+            # Set message length to None for next message
+            self._msg_len = None
+
+        return _buffer
+
+    def message_received(self, msg):
+        """
+        Must override in subclass
+
+        :param msg: the full message
+        :return: None
+        """
+        raise NotImplementedError()
+
+
+class myIm(myImProtocol):
+
+    def __init__(self):
+
+        self.handler = MessageHandler()
+
+        self.transport = None
+
+    def connection_made(self, transport):
+        print(self.handler._session.clients)
+        self.transport = transport
+
+    def message_received(self, msg):
+        """
+        The real message handler
+        :param msg: a full message without prefix length
+        :return: None
+        """
+        # Convert bytes msg to python dictionary
+        msg = json.loads(msg.decode("utf-8"))
+
+        print("receive msg...{}".format(msg))
+        # Handler msg
+        return self.handler.handle(msg, self.transport)
+    
+    def connection_lost(self, exc):
+        """
+        show disconnect msg,
+        unregister current connection session
+        """
+        for each_client, each_trans in self.handler._session.clients.items():
+            if self.transport == each_trans:
+                print(f"{each_client} disconnected!")
+                msg = {'type': 'unregister', 'uid': each_client}
+                self.handler.handle(msg, self.transport)
+
+
+class myImServer(object):
+    def __init__(self, protocol_factory, host, port):
+
+        self.host = host
+        self.port = port
+        self.protocol_factory = protocol_factory
+
+    def start(self):
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(loop.create_server(self.protocol_factory, self.host, self.port))
+        loop.run_forever()
 
 
 if __name__ == '__main__':
-    HOST = '0.0.0.0'
-    PORT = 6666
-    s = ChatServer(PORT)
     try:
-        asyncore.loop()
+        server = myImServer(myIm, '0.0.0.0', 6666)
+        server.start()
     except KeyboardInterrupt:
-        print()
+        pass
