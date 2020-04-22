@@ -22,6 +22,11 @@ _MESSAGE_REG = {
     'uid': 'nobody',
 }
 
+_MESSAGE_CMD = {
+    'type': 'cmd',
+    'request': "",
+}
+
 
 class LoginFrame(wx.Frame):
     """
@@ -31,7 +36,6 @@ class LoginFrame(wx.Frame):
         '''初始化，添加控件并绑定事件'''
         wx.Frame.__init__(self, parent, id, title)
         self.loop = asyncio.get_event_loop()
-        # self.reader, self.writer = asyncio.open_connection('127.0.0.1', 6666, loop=self.loop)
         self.reader, self.writer = None, None
         self.SetSize(size)
         self.Center()
@@ -40,7 +44,6 @@ class LoginFrame(wx.Frame):
         self.serverAddress = wx.TextCtrl(self, pos = (120, 47), size = (150, 25))
         self.userName = wx.TextCtrl(self, pos = (120, 97), size = (150, 25))
         self.loginButton = wx.Button(self, label = 'Login', pos = (80, 145), size = (130, 30))
-        # self.loginButton.Bind(wx.EVT_BUTTON, self.login)
         AsyncBind(wx.EVT_BUTTON, self.login, self.loginButton)
         self.Show()
 
@@ -57,6 +60,7 @@ class LoginFrame(wx.Frame):
 
                 name = str(self.userName.GetLineText(0))
                 _MESSAGE_REG['uid'] = name
+                _MESSAGE_TEXT['sender'] = name
 
                 msg = json.dumps(_MESSAGE_REG)
                 msg_len = len(msg)
@@ -69,7 +73,7 @@ class LoginFrame(wx.Frame):
                     return
                 else:
                     self.Close()
-                    ChatFrame(None, -2, title='Chat Client', size=(500, 350), 
+                    ChatFrame(None, -2, title='Chat Client', size=(550, 370), 
                         reader=self.reader, writer=self.writer)
         except Exception:
             wx.MessageBox("Something Wrong!", "ERROR" ,wx.OK | wx.ICON_INFORMATION)
@@ -85,14 +89,15 @@ class ChatFrame(wx.Frame):
         self.reader, self.writer = reader, writer
         self.SetSize(size)
         self.Center()
-        self.chatFrame = wx.TextCtrl(self, pos = (5, 5), size = (490, 310), style = wx.TE_MULTILINE | wx.TE_READONLY)
+        self.chatFrame = wx.TextCtrl(self, pos = (5, 5), size = (490, 310),
+                        style = wx.TE_MULTILINE | wx.TE_READONLY)
         self.message = wx.TextCtrl(self, pos = (5, 320), size = (300, 25))
-        self.sendButton = wx.Button(self, label = "Send", pos = (310, 320), size = (58, 25))
-        self.usersButton = wx.Button(self, label = "Users", pos = (373, 320), size = (58, 25))
-        self.closeButton = wx.Button(self, label = "Close", pos = (436, 320), size = (58, 25))
-        # self.sendButton.Bind(wx.EVT_BUTTON, self.send)
-        # self.usersButton.Bind(wx.EVT_BUTTON, self.lookUsers)
-        # self.closeButton.Bind(wx.EVT_BUTTON, self.close)
+        self.sendButton = wx.Button(self, label = "Send", pos = (310, 320),
+                        size = (58, 25))
+        self.usersButton = wx.Button(self, label = "Users", pos = (373, 320),
+                        size = (58, 25))
+        self.closeButton = wx.Button(self, label = "Close", pos = (436, 320),
+                        size = (58, 25))
         AsyncBind(wx.EVT_BUTTON, self.send, self.sendButton)
         AsyncBind(wx.EVT_BUTTON, self.lookUsers, self.usersButton)
         AsyncBind(wx.EVT_BUTTON, self.close, self.closeButton)

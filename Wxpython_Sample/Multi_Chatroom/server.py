@@ -116,9 +116,9 @@ class COMMAND(MessageHandler):
     """
     __msgtype__ = "cmd"
 
-    async def handle(self, msg, transport);
+    async def handle(self, msg, transport):
         pass
-    
+
 
 class SendTextMsg(MessageHandler):
     """
