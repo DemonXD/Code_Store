@@ -9,22 +9,27 @@ from time import sleep
 types:['text', 'register', 'unregister', 'cmd', 'unknown]
 """
 
-
+# 返回消息状态
 _MESSAGE_TEXT = {
     'type': 'text',
-    'sender': 'niuminguo',
-    'receiver': 'niuminguo',
+    'sender': '',
+    'receiver': 'all',
     'content': 'love',
+    'back_status': None
 }
 
+# 不返回消息
 _MESSAGE_REG = {
     'type': 'register',
-    'uid': 'nobody',
+    'uid': '',
 }
 
+# 返回命令执行状态
 _MESSAGE_CMD = {
     'type': 'cmd',
+    'sender': '',
     'request': "",
+    'status': None
 }
 
 
@@ -61,6 +66,7 @@ class LoginFrame(wx.Frame):
                 name = str(self.userName.GetLineText(0))
                 _MESSAGE_REG['uid'] = name
                 _MESSAGE_TEXT['sender'] = name
+                _MESSAGE_CMD['sender'] = name
 
                 msg = json.dumps(_MESSAGE_REG)
                 msg_len = len(msg)
@@ -73,7 +79,7 @@ class LoginFrame(wx.Frame):
                     return
                 else:
                     self.Close()
-                    ChatFrame(None, -2, title='Chat Client', size=(550, 370), 
+                    ChatFrame(None, -2, title='Chat Client', size=(610, 380), 
                         reader=self.reader, writer=self.writer)
         except Exception:
             wx.MessageBox("Something Wrong!", "ERROR" ,wx.OK | wx.ICON_INFORMATION)
@@ -89,44 +95,103 @@ class ChatFrame(wx.Frame):
         self.reader, self.writer = reader, writer
         self.SetSize(size)
         self.Center()
-        self.chatFrame = wx.TextCtrl(self, pos = (5, 5), size = (490, 310),
+        self.chatFrame = wx.TextCtrl(self, pos = (5, 5), size = (445, 320),
                         style = wx.TE_MULTILINE | wx.TE_READONLY)
-        self.message = wx.TextCtrl(self, pos = (5, 320), size = (300, 25))
-        self.sendButton = wx.Button(self, label = "Send", pos = (310, 320),
-                        size = (58, 25))
-        self.usersButton = wx.Button(self, label = "Users", pos = (373, 320),
-                        size = (58, 25))
-        self.closeButton = wx.Button(self, label = "Close", pos = (436, 320),
-                        size = (58, 25))
+        self.message = wx.TextCtrl(self, pos = (5, 330), size = (300, 25),
+                        style = wx.TE_PROCESS_ENTER)
+        self.sendButton = wx.Button(self, label = "发送", pos = (310, 330),
+                        size = (65, 25))
+
+        self.closeButton = wx.Button(self, label = "注销", pos = (380, 330),
+                        size = (65, 25))
+
+        self.userlist = wx.TextCtrl(self, pos = (455, 5), size = (150, 350),
+                        style = wx.TE_MULTILINE | wx.TE_READONLY)
+
         AsyncBind(wx.EVT_BUTTON, self.send, self.sendButton)
-        AsyncBind(wx.EVT_BUTTON, self.lookUsers, self.usersButton)
+        AsyncBind(wx.EVT_TEXT_ENTER, self.send, self.message)
         AsyncBind(wx.EVT_BUTTON, self.close, self.closeButton)
         StartCoroutine(self.receive, self)
         self.Show()
 
     async def send(self, event):
-        '''发送消息'''
+        '''发送消息
+        default: 发送给所有人
+        @person: 单独可见
+        '''
         message = str(self.message.GetLineText(0)).strip()
-        if message != '':
-          con.write('say ' + message + '\n')
-          self.message.Clear()
+        if message != "":
+            _MESSAGE_TEXT['content'] = message
 
-    async def lookUsers(self, event):
+            msg = json.dumps(_MESSAGE_TEXT)
+            msg_len = len(msg)
+            packed_msg = pack("!i%ds" % msg_len, msg_len, bytes(msg, encoding='utf-8'))
+            self.writer.write(packed_msg)
+            await self.writer.drain()
+
+    async def send_back(self, msg):
+        self.chatFrame.AppendText(f"{_MESSAGE_REG['uid']}:\t{msg['content']}" + "\n")
+        self.message.Clear()
+
+    async def receive_msg(self, msg):
+        """
+        handle msg show in frame
+        """
+        self.chatFrame.AppendText(f"{msg['sender']}:\t{msg['content']}" + "\n")
+
+    async def lookUsers(self):
         '''查看当前在线用户'''
-        con.write('look\n')
+        _MESSAGE_CMD['request'] = 'USER'
+        msg = json.dumps(_MESSAGE_CMD)
+        msg_len = len(msg)
+        packed_msg = pack("!i%ds" % msg_len, msg_len, bytes(msg, encoding='utf-8'))
+        self.writer.write(packed_msg)
+        try:
+            await self.writer.drain()
+            users = await self.reader.read(1024)
+            users = json.loads(users)['users']
+            self.userlist.Clear()
+            [self.userlist.AppendText(user+'\n') for user in users]
+        except ConnectionResetError:
+            pass
+
+    async def updateUserList(self, users):
+        self.userlist.Clear()
+        [self.userlist.AppendText(user+'\n') for user in users]
+
+    async def handle_receive_data(self):
+        """
+        统一处理所有返回消息
+        """
+        try:
+            datas = await self.reader.read(1024)
+            datas = json.loads(datas)
+            if "text" == datas['type']:
+                if datas['back_status'] == "success":
+                    await self.send_back(datas)
+                elif datas['back_status'] == None:
+                    await self.receive_msg(datas)
+            elif "cmd" == datas['type']:
+                pass
+        except ConnectionResetError:
+            pass
+        
 
     async def close(self, event):
         '''关闭窗口'''
-        del self.reader, self.writer
-        self.Close()
+        try:
+            self.writer.close()
+        except Exception:
+            wx.MessageBox("Something Wrong!", "ERROR" ,wx.OK | wx.ICON_INFORMATION)
+        else:
+            self.Close()
+            LoginFrame(None, -1, title = "Login", size = (280, 200))
 
     async def receive(self):
         '''接受服务器的消息'''
         while True:
-            sleep(0.6)
-            result = await self.reader.read(1024)
-            if result != '':
-                self.chatFrame.AppendText(result)
+            await asyncio.sleep(0.2)
+            await self.handle_receive_data()
 
 
 if __name__ == '__main__':

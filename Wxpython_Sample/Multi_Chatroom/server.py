@@ -113,11 +113,20 @@ class Register(MessageHandler):
 class COMMAND(MessageHandler):
     """
     accept client command
+    Message body should like this:
+
+        {'type': 'cmd', 'request': 'command'}
     """
     __msgtype__ = "cmd"
 
     async def handle(self, msg, transport):
-        pass
+        CMD = msg['request']
+        if "USER" == CMD:
+            msg = {
+                "status": "success",
+                "users": [user for user in self._session.clients.keys()]
+            }
+            transport.write(bytes(json.dumps(msg), encoding="utf-8"))
 
 
 class SendTextMsg(MessageHandler):
@@ -140,13 +149,21 @@ class SendTextMsg(MessageHandler):
         :return: None
         """
         print("send data...{}".format(msg))
-
-        transport = self._session.get(msg['receiver'])
-        msg_pack = json.dumps(msg)
-        msg_len = len(msg_pack)
-        if transport:
-            # Pack message as length-prifixed and send to receiver.
-            transport.write(pack("!I%ds" % msg_len, msg_len, bytes(msg_pack, encoding='utf-8')))
+        riv = msg['receiver']
+        if 'all' == riv:
+            for each_client, each_sess in self._session.clients.items():
+                if each_client != msg['sender']:
+                    each_sess.write(bytes(json.dumps(msg), encoding='utf-8'))
+            else:
+                msg['back_status'] = 'success'
+                self._session.get(msg['sender']).write(bytes(json.dumps(msg), encoding="utf-8"))
+        else:
+            transport = self._session.get(riv)
+            msg_pack = json.dumps(msg)
+            msg_len = len(msg_pack)
+            if transport:
+                # Pack message as length-prifixed and send to receiver.
+                transport.write(pack("!I%ds" % msg_len, msg_len, bytes(msg_pack, encoding='utf-8')))
 
 
 class Unregister(MessageHandler):
@@ -234,7 +251,6 @@ class myIm(myImProtocol):
         self.transport = None
 
     def connection_made(self, transport):
-        print(self.handler._session.clients)
         self.transport = transport
 
     def message_received(self, msg):
