@@ -1,6 +1,7 @@
 import wx
 import asyncio
 import json
+from collections import Counter
 from struct import pack
 from wxasync import AsyncBind, WxAsyncApp, StartCoroutine
 from time import sleep
@@ -29,8 +30,11 @@ _MESSAGE_CMD = {
     'type': 'cmd',
     'sender': '',
     'request': "",
+    'data': [],
     'status': None
 }
+
+CUR_USERS = []
 
 
 class LoginFrame(wx.Frame):
@@ -112,6 +116,7 @@ class ChatFrame(wx.Frame):
         AsyncBind(wx.EVT_TEXT_ENTER, self.send, self.message)
         AsyncBind(wx.EVT_BUTTON, self.close, self.closeButton)
         StartCoroutine(self.receive, self)
+        StartCoroutine(self.lookUsers, self)
         self.Show()
 
     async def send(self, event):
@@ -130,34 +135,34 @@ class ChatFrame(wx.Frame):
             await self.writer.drain()
 
     async def send_back(self, msg):
-        self.chatFrame.AppendText(f"{_MESSAGE_REG['uid']}:\t{msg['content']}" + "\n")
+        self.chatFrame.WriteText(f"{_MESSAGE_REG['uid']}:\t{msg['content']}" + "\n")
         self.message.Clear()
 
     async def receive_msg(self, msg):
         """
         handle msg show in frame
         """
-        self.chatFrame.AppendText(f"{msg['sender']}:\t{msg['content']}" + "\n")
+        self.chatFrame.WriteText(f"{msg['sender']}:\t{msg['content']}" + "\n")
 
     async def lookUsers(self):
         '''查看当前在线用户'''
-        _MESSAGE_CMD['request'] = 'USER'
-        msg = json.dumps(_MESSAGE_CMD)
-        msg_len = len(msg)
-        packed_msg = pack("!i%ds" % msg_len, msg_len, bytes(msg, encoding='utf-8'))
-        self.writer.write(packed_msg)
-        try:
-            await self.writer.drain()
-            users = await self.reader.read(1024)
-            users = json.loads(users)['users']
-            self.userlist.Clear()
-            [self.userlist.AppendText(user+'\n') for user in users]
-        except ConnectionResetError:
-            pass
+        while True:
+            await asyncio.sleep(3)
+            try:
+                _MESSAGE_CMD['request'] = 'LISTONLINEUSERS'
+                msg = json.dumps(_MESSAGE_CMD)
+                msg_len = len(msg)
+                packed_msg = pack("!i%ds" % msg_len, msg_len, bytes(msg, encoding='utf-8'))
+                self.writer.write(packed_msg)
+                await self.writer.drain()
+            except ConnectionResetError:
+                pass
 
     async def updateUserList(self, users):
-        self.userlist.Clear()
-        [self.userlist.AppendText(user+'\n') for user in users]
+        if Counter(CUR_USERS) != Counter(users):
+            CUR_USERS = users
+            self.userlist.Clear()
+            [self.userlist.WriteText(user+'\n') for user in users if user != _MESSAGE_REG['uid']]
 
     async def handle_receive_data(self):
         """
@@ -165,17 +170,18 @@ class ChatFrame(wx.Frame):
         """
         try:
             datas = await self.reader.read(1024)
-            datas = json.loads(datas)
-            if "text" == datas['type']:
-                if datas['back_status'] == "success":
-                    await self.send_back(datas)
-                elif datas['back_status'] == None:
-                    await self.receive_msg(datas)
-            elif "cmd" == datas['type']:
-                pass
+            if datas:
+                datas = json.loads(datas.decode("utf-8"))
+                if "text" == datas['type']:
+                    if datas['back_status'] == "success":
+                        await self.send_back(datas)
+                    elif datas['back_status'] == None:
+                        await self.receive_msg(datas)
+                elif "cmd" == datas['type']:
+                    if datas['request'] == 'LISTONLINEUSERS' and datas['status'] == "success":
+                        await self.updateUserList(datas['data'])
         except ConnectionResetError:
             pass
-        
 
     async def close(self, event):
         '''关闭窗口'''
@@ -195,7 +201,10 @@ class ChatFrame(wx.Frame):
 
 
 if __name__ == '__main__':
-    app = WxAsyncApp()
-    LoginFrame(None, -1, title = "Login", size = (280, 200))
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(app.MainLoop())
+    try:
+        app = WxAsyncApp()
+        LoginFrame(None, -1, title = "Login", size = (280, 200))
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(app.MainLoop())
+    except KeyboardInterrupt:
+        pass

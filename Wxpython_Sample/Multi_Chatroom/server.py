@@ -121,11 +121,9 @@ class COMMAND(MessageHandler):
 
     async def handle(self, msg, transport):
         CMD = msg['request']
-        if "USER" == CMD:
-            msg = {
-                "status": "success",
-                "users": [user for user in self._session.clients.keys()]
-            }
+        if "LISTONLINEUSERS" == CMD:
+            msg["status"] =  "success"
+            msg["data"] = [user for user in self._session.clients.keys()]
             transport.write(bytes(json.dumps(msg), encoding="utf-8"))
 
 
