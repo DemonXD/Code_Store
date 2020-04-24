@@ -1,3 +1,4 @@
+import re
 import wx
 import asyncio
 import json
@@ -16,7 +17,7 @@ _MESSAGE_TEXT = {
     'sender': '',
     'receiver': 'all',
     'content': 'love',
-    'back_status': None
+    'back_status': 'None'
 }
 
 # 不返回消息
@@ -31,10 +32,10 @@ _MESSAGE_CMD = {
     'sender': '',
     'request': "",
     'data': [],
-    'status': None
+    'status': 'None'
 }
 
-CUR_USERS = []
+_CUR_USERS = [None]
 
 
 class LoginFrame(wx.Frame):
@@ -127,7 +128,21 @@ class ChatFrame(wx.Frame):
         message = str(self.message.GetLineText(0)).strip()
         if message != "":
             _MESSAGE_TEXT['content'] = message
-
+            if message.startswith('@'):
+                # 执行判断操作，是否是@某人私密发送
+                for each_user in [user for user in _CUR_USERS if user != _MESSAGE_REG['uid']]:
+                    if message.startswith((f'@{each_user},', f'@{each_user}，')):
+                        cp_MESSAGE_TEXT = _MESSAGE_TEXT
+                        cp_MESSAGE_TEXT['receiver'] = each_user
+                        cp_MESSAGE_TEXT['content'] = re.sub(r"@%s(,|，)"%(each_user), "", message).strip()
+                        msg = json.dumps(cp_MESSAGE_TEXT)
+                        msg_len = len(msg)
+                        packed_msg = pack("!i%ds" % msg_len, msg_len, bytes(msg, encoding='utf-8'))
+                        self.writer.write(packed_msg)
+                        await self.writer.drain()
+                        return
+            # 发送给所有人
+            _MESSAGE_TEXT['receiver'] = 'all'
             msg = json.dumps(_MESSAGE_TEXT)
             msg_len = len(msg)
             packed_msg = pack("!i%ds" % msg_len, msg_len, bytes(msg, encoding='utf-8'))
@@ -135,7 +150,7 @@ class ChatFrame(wx.Frame):
             await self.writer.drain()
 
     async def send_back(self, msg):
-        self.chatFrame.WriteText(f"{_MESSAGE_REG['uid']}:\t{msg['content']}" + "\n")
+        self.chatFrame.WriteText(f"{_MESSAGE_REG['uid']}:\t{_MESSAGE_TEXT['content']}" + "\n")
         self.message.Clear()
 
     async def receive_msg(self, msg):
@@ -159,8 +174,9 @@ class ChatFrame(wx.Frame):
                 pass
 
     async def updateUserList(self, users):
-        if Counter(CUR_USERS) != Counter(users):
-            CUR_USERS = users
+        global _CUR_USERS
+        if Counter(_CUR_USERS) != Counter(users):
+            _CUR_USERS = users
             self.userlist.Clear()
             [self.userlist.WriteText(user+'\n') for user in users if user != _MESSAGE_REG['uid']]
 
@@ -171,11 +187,11 @@ class ChatFrame(wx.Frame):
         try:
             datas = await self.reader.read(1024)
             if datas:
-                datas = json.loads(datas.decode("utf-8"))
+                datas = json.loads(datas.decode('utf-8'))
                 if "text" == datas['type']:
                     if datas['back_status'] == "success":
                         await self.send_back(datas)
-                    elif datas['back_status'] == None:
+                    elif datas['back_status'] == 'None':
                         await self.receive_msg(datas)
                 elif "cmd" == datas['type']:
                     if datas['request'] == 'LISTONLINEUSERS' and datas['status'] == "success":

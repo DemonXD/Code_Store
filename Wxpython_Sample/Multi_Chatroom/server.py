@@ -146,23 +146,23 @@ class SendTextMsg(MessageHandler):
         :param msg:
         :return: None
         """
-        print("send data...{}".format(msg))
         riv = msg['receiver']
         if 'all' == riv:
             for each_client, each_sess in self._session.clients.items():
                 if each_client != msg['sender']:
-                    each_sess.write(bytes(json.dumps(msg), encoding='utf-8'))
-            else:
-                msg['back_status'] = 'success'
-                self._session.get(msg['sender']).write(bytes(json.dumps(msg), encoding="utf-8"))
+                    each_sess.write(bytes(json.dumps(msg), encoding='utf-8'))   
         else:
             transport = self._session.get(riv)
             msg_pack = json.dumps(msg)
             msg_len = len(msg_pack)
             if transport:
                 # Pack message as length-prifixed and send to receiver.
-                transport.write(pack("!I%ds" % msg_len, msg_len, bytes(msg_pack, encoding='utf-8')))
+                transport.write(bytes(msg_pack, encoding='utf-8'))
 
+        msg['back_status'] = 'success'
+        self._session.get(msg['sender']).write(bytes(json.dumps(msg), encoding="utf-8"))
+
+        print("send data...{}".format(msg))
 
 class Unregister(MessageHandler):
     """
