@@ -121,6 +121,7 @@ class MergeDictTool:
         for idx, each_key in enumerate(path):
             if not temp:
                 if len(path) < 2:
+                    # for 1 level dict value set
                     result[each_key].append(value)
                 temp = result[each_key]
                 continue
