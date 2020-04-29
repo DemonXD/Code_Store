@@ -1,5 +1,6 @@
 import copy
 from typing import Any
+import numpy as np
 
 
 # class DictKeyError(KeyError):
@@ -128,6 +129,21 @@ class MergeDictTool:
                     raise ItemTypeError
             temp = temp[each_key]
 
+    def statistic(self, result: dict):
+        """
+        Desc.: Calculate the min, max, median value for each key
+        :input result: origin dict
+        :return None:
+        """
+        for key, val in result.items():
+            if isinstance(val, dict):
+                self.statistic(val)
+            elif isinstance(val, list):
+                if all([isinstance(each, int) for each in val]):
+                    result[key] = [min(val), np.median(val), max(val)]
+                else:
+                    raise ItemTypeError
+
     def mergeAndCalculate(self):
         self.analysisPath(self.sampleitem)
         if self.pathlist is not []:
@@ -139,6 +155,8 @@ class MergeDictTool:
                     value = self.getPathValue(each_item, each_path) # get each path value
                     self.setPathvalue(result, each_path, value)
             print("result dict: ", result)
+            self.statistic(result)
+            print("calculate result: ", result)
 
 
 if __name__ == "__main__":
@@ -146,26 +164,26 @@ if __name__ == "__main__":
         {
             "field": {
                 "column1": {
-                    "n1": {"m1": "v1"}, 
-                    "n2": "v2"
+                    "n1": {"m1": 10}, 
+                    "n2": 15
                 }, 
-                "column2": "v~"
+                "column2": 3
             }
         },
         {
             "field": {
                 "column1": {
-                    "n1": {"m1": "v3"}, 
-                    "n2": "v4"}, 
-                "column2": "v^"
+                    "n1": {"m1": 15}, 
+                    "n2": 20}, 
+                "column2": 6
             }
         },
         {
             "field": {
                 "column1": {
-                    "n1": {"m1": "v5"}, 
-                    "n2": "v6"}, 
-                "column2": "v*"
+                    "n1": {"m1": 20}, 
+                    "n2": 10}, 
+                "column2": 9
             }
         },
     ]
@@ -198,4 +216,4 @@ if __name__ == "__main__":
     ]
 
     ins = MergeDictTool(sample).mergeAndCalculate()
-    ins = MergeDictTool(sample2).mergeAndCalculate()
+    # ins = MergeDictTool(sample2).mergeAndCalculate()
