@@ -107,8 +107,8 @@ class MergeDictTool:
                 temp = singleitem.get(each_key)
                 continue
             temp = temp.get(each_key)
-            if not temp: # if each item structure not equal, raise exception
-                raise StructureError
+            # if not temp: # if each item structure not equal, raise exception
+            #     raise StructureError
         return temp
 
     def setPathvalue(self, result: dict, path: list, value: Any):
@@ -120,6 +120,8 @@ class MergeDictTool:
         temp = None
         for idx, each_key in enumerate(path):
             if not temp:
+                if len(path) < 2:
+                    result[each_key].append(value)
                 temp = result[each_key]
                 continue
             if idx+1 == len(path):
@@ -139,7 +141,7 @@ class MergeDictTool:
             if isinstance(val, dict):
                 self.statistic(val)
             elif isinstance(val, list):
-                if all([isinstance(each, int) for each in val]):
+                if all([isinstance(each, (int, float)) for each in val]):
                     result[key] = [min(val), np.median(val), max(val)]
                 else:
                     raise ItemTypeError
@@ -149,17 +151,23 @@ class MergeDictTool:
         if self.pathlist is not []:
             # print(self.pathlist)
             result = self.buildblankdict(copy.deepcopy(self.sampleitem))
-            print("blank dict: ", result)
+            # print("blank dict: ", result)
             for each_item in self.originlist:
                 for each_path in self.pathlist:
                     value = self.getPathValue(each_item, each_path) # get each path value
                     self.setPathvalue(result, each_path, value)
-            print("result dict: ", result)
+            # print("result dict: ", result)
             self.statistic(result)
-            print("calculate result: ", result)
-
+            # print("calculate result: ", result)
+            return result
 
 if __name__ == "__main__":
+    single_sample = [
+        {'name1': 1, 'name2': 2, "name3": 3},
+        {'name1': 2, 'name2': 3, "name3": 4},
+        {'name1': 3, 'name2': 4, "name3": 5},
+        {'name1': 4, 'name2': 5, "name3": 6},
+    ]
     sample = [
         {
             "field": {
@@ -214,6 +222,7 @@ if __name__ == "__main__":
             }
         },
     ]
-
-    ins = MergeDictTool(sample).mergeAndCalculate()
+    
+    print(MergeDictTool(single_sample).mergeAndCalculate())
+    print(MergeDictTool(sample).mergeAndCalculate())
     # ins = MergeDictTool(sample2).mergeAndCalculate()
