@@ -230,3 +230,32 @@ def result_way(alist, map2d):
     min_one = min(list(all_result.keys()))
     return all_result[min_one]
 
+
+if __name__ == "__main__":
+    # 15x15 四方格地图
+    map2d = [[0 for _ in range(15)] for _ in range(15)]
+    # 设置障碍
+    for i in range(4, 7):
+        map2d[i][7] = 1
+        map2d[6][i] = 1
+    for i in range(9, 13):
+        map2d[i][4] = 1
+    for i in range(10, 13):
+        map2d[5][i] = 1
+    for i in range(10, 13):
+        map2d[i][10] = 1
+        map2d[10][i] = 1
+
+    # 起始点
+    start_point = (0, 0)
+    end_point = (13, 14)
+
+    x, y, dis = get_per_dis(start_point, end_point, map2d)
+    print("dis: ", dis)
+    for each in list(zip(x, y)):
+        map2d[each[0]][each[1]] = '*'
+    
+    for each in map2d:
+        for i in each:
+            print(i, end=" ")
+        print()
