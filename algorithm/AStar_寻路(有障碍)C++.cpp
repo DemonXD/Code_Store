@@ -117,9 +117,8 @@ public:
                 }
             }
             std::cout << "AStar 初始化成功" << std::endl;
-
         }
-    ~AStar() {}
+    ~AStar() { ; }
     bool is_in_map(int x, int y)
     {
         bool temp = (0 <= x & x < 15) & (0 <= y & y < 15);
@@ -218,8 +217,8 @@ public:
     }
     void search()
     {
-        std::cout << "搜索开始" << std::endl;
         int count = 0;
+        std::cout << "搜索开始" << std::endl;
         while (true)
         {
 
@@ -267,10 +266,10 @@ public:
             std::cout << std::endl;
             for (auto iter=Q.begin(); iter != Q.end(); iter ++)
             {
+                Node* node_Q;
                 std::cout << "*****当前点: (" << std::get<0>(iter->first) << ", " << std::get<1>(iter->first) << ")" << std::endl;
                 int temp_x = std::get<0>(iter->first);
                 int temp_y = std::get<1>(iter->first);
-                Node* node_Q;
                 *node_Q = iter->second;
 
                 auto it = this->openlist.find(std::make_tuple(temp_x, temp_y));
