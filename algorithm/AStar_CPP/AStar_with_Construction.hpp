@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 #include <vector>
 #include <array>
@@ -11,10 +12,10 @@ struct Node
     int nx, ny, nh, ng, nf;
     // int nf = ng + nh;
     Node* nparent = nullptr;
-    Node(){}
+    Node();
     Node(const Node* other);
     Node(int x, int y, Node* parent);
-    ~Node(){}
+    ~Node() {}
     Node operator=(const Node* onode);
     int get_G();
     int get_H(std::tuple<int, int> end);
@@ -71,7 +72,7 @@ public:
     void upd_openlist(Node* node);
     void add_in_openlist(Node* node);
     void add_in_closelist(Node* node);
-    void pop_min_F(Node* node_min);
+    Node* pop_min_F();
     void get_Q(Node* P, std::map<std::tuple<int, int>, Node*>& temp_points);
     void search();
     void run();

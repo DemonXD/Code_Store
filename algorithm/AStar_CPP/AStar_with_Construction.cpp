@@ -27,85 +27,89 @@ void Printmap(const std::map<std::tuple<int, int>, Node*>& temp)
     std::cout << std::endl;
 }
 
+
 Node::Node(const Node* other)
-    {
-        this->nx = other->nx;
-        this->ny = other->ny;
-        this->nparent = other->nparent;
-    }
+{
+    this->nx = other->nx;
+    this->ny = other->ny;
+    this->nparent = other->nparent;
+    this->nf = other->nf;
+    this->ng = other->ng;
+    this->nh = other->nh;
+}
 Node::Node(int x, int y, Node* parent)
-        : nx(x), ny(y), nh(0), ng(0), nparent(parent), nf(0) {}
+    : nx(x), ny(y), nh(0), ng(0), nparent(parent), nf(0) {}
 Node Node::operator=(const Node* onode)
-    {
-        nx = onode->nx;
-        ny = onode->ny;
-        nh = onode->nh;
-        ng = onode->ng;
-        nparent = onode->nparent;
-        return *this;
-    }
+{
+    nx = onode->nx;
+    ny = onode->ny;
+    nh = onode->nh;
+    ng = onode->ng;
+    nparent = onode->nparent;
+    return *this;
+}
 int Node::get_G()
-        // 当前节点到起点的代价
+// 当前节点到起点的代价
+{
+    if (this->ng != 0)
     {
-        if (this->ng != 0)
-        {
-            return this->ng;
-        }
-        else if (this->nparent == nullptr)
-        {
-            this->ng = 0;
-        }
-        else if ((this->nparent->nx == this->nx) | (this->nparent->ny == this->ny))
-        {
-            this->ng = this->nparent->get_G() + 10;
-        }
-        else
-        {
-            this->ng = this->nparent->get_G() + 14;
-        }
-        std::cout << this->nx << "， " << this->ny << "到起点的代价: " << this->ng << std::endl;
         return this->ng;
     }
+    else if (this->nparent == nullptr)
+    {
+        this->ng = 0;
+    }
+    else if ((this->nparent->nx == this->nx) | (this->nparent->ny == this->ny))
+    {
+        this->ng = this->nparent->get_G() + 10;
+    }
+    else
+    {
+        this->ng = this->nparent->get_G() + 14;
+    }
+    std::cout << this->nx << "， " << this->ny << "到起点的代价: " << this->ng << std::endl;
+    return this->ng;
+}
 int Node::get_H(std::tuple<int, int> end)
+{
+    if (this->nh == 0)
     {
-        if (this->nh == 0)
-        {
-            this->nh = this->manhattan(this->nx, this->ny, std::get<0>(end), std::get<1>(end)) * 10;
-        }
-        std::cout << this->nx << "， " << this->ny << "到终点的估值: " << this->nh << std::endl;
-        return this->nh;
+        this->nh = this->manhattan(this->nx, this->ny, std::get<0>(end), std::get<1>(end)) * 10;
     }
+    std::cout << this->nx << "， " << this->ny << "到终点的估值: " << this->nh << std::endl;
+    return this->nh;
+}
 int Node::get_F(std::tuple<int, int> end)
+{
+    if (this->nf == 0)
     {
-        if (this->nf == 0)
-        {
-            this->nf = this->get_G() + this->get_H(end);
-        }
-        std::cout << this->nx << "， " << this->ny << "到终点的总估值：" << this->nf << std::endl;
-        return this->nf;
+        this->nf = this->get_G() + this->get_H(end);
     }
+    std::cout << this->nx << "， " << this->ny << "到终点的总估值：" << this->nf << std::endl;
+    return this->nf;
+}
 int Node::manhattan(int from_x, int from_y, int end_x, int end_y)
-    {
-        int dis = abs(end_x - from_x) + abs(end_y - from_y);
-        std::cout << "manhattan距离: " << dis << std::endl;
-        return dis;
-    }
+{
+    int dis = abs(end_x - from_x) + abs(end_y - from_y);
+    std::cout << "manhattan距离: " << dis << std::endl;
+    return dis;
+}
 
 
 AStar::AStar(std::tuple<int, int> start, std::tuple<int, int> end, const int map2d[15][15])
-        : nstart(start), nend(end)
+    : nstart(start), nend(end)
+{
+    start_x = std::get<0>(start);
+    start_y = std::get<1>(start);
+    for (int i = 0; i < 15; i++)
     {
-        start_x = std::get<0>(start);
-        start_y = std::get<1>(start);
-        for (int i = 0; i < 15; i++)
+        for (int j = 0; j < 15; j++)
         {
-            for (int j = 0; j < 15; j++)
-            {
-                nmap2d[i][j] = map2d[i][j];
-            }
+            nmap2d[i][j] = map2d[i][j];
         }
-        std::cout << "AStar 初始化成功" << std::endl;
     }
+    std::cout << "AStar 初始化成功" << std::endl;
+}
 bool AStar::is_in_map(int x, int y)
 {
     bool temp = ((0 <= x) & (x < 15)) & ((0 <= y) & (y < 15));
@@ -141,28 +145,25 @@ void AStar::add_in_closelist(Node* node)
     // Node* temp = node;
     std::cout << "节点: (" << node->nx << ", " << node->ny << ") " << "添加进closelist列表中" << std::endl;
     auto it = this->closelist.find(std::make_tuple(node->nx, node->ny));
-    if (it == this->closelist.end()) 
+    if (it == this->closelist.end())
         this->closelist[std::make_tuple(node->nx, node->ny)] = node;
     std::cout << "add_in_closelist 执行完成" << std::endl;
 }
-void AStar::pop_min_F(Node* node_min) // OK
+Node* AStar::pop_min_F() // OK
 {
     std::tuple<int, int> key_min(-1, -1);
+    Node* node_min = nullptr;
     for (auto iter = this->openlist.begin(); iter != this->openlist.end(); iter++)
     {
         if (key_min == std::make_tuple(-1, -1))
         {
             key_min = iter->first;
-            node_min->nx = iter->second->nx;
-            node_min->ny = iter->second->ny;
-            node_min->nparent = iter->second->nparent;
+            node_min = new Node(iter->second);
         }
         else if ((iter->second)->get_F(this->nend) < node_min->get_F(this->nend))
         {
             key_min = iter->first;
-            node_min->nx = iter->second->nx;
-            node_min->ny = iter->second->ny;
-            node_min->nparent = iter->second->nparent;
+            node_min = new Node(iter->second);
         }
     }
     if (key_min != std::make_tuple(-1, -1))
@@ -170,6 +171,7 @@ void AStar::pop_min_F(Node* node_min) // OK
         this->openlist.erase(key_min);
     }
     std::cout << " 最小F值node点: (" << node_min->nx << ", " << node_min->ny << ")" << std::endl;
+    return node_min;
 }
 void AStar::get_Q(Node* P, std::map<std::tuple<int, int>, Node*>& temp_points) // OK
 {
@@ -215,8 +217,7 @@ void AStar::search()
         std::cout << "closelist(已探索坐标列表): ";
         Printmap(this->closelist);
 
-        Node* P;
-        this->pop_min_F(P);
+        Node* P = this->pop_min_F();
         if (P == nullptr) break;
         this->add_in_closelist(P);
         std::map<std::tuple<int, int>, Node*> Q = {};
@@ -256,7 +257,7 @@ void AStar::search()
                 std::cout << "node_Q的F值比node_openlist更小，则用node_Q替换node_openlist" << std::endl;
                 this->upd_openlist(node_Q);
             }
-            std::cout << "*****当前点: " ;
+            std::cout << "*****当前点: ";
             Printtuple(iter->first);
             std::cout << "检查完毕" << std::endl;
             // delete node_Q;
