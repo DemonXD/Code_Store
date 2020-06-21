@@ -1,8 +1,9 @@
 '''
 基于A*，方格地图有障碍物的搜索算法
 '''
+import math
 from itertools import permutations
-from utils.utils_func import MemCache, timecost
+# from utils.utils_func import dictcache, timecost
 
 class Node:
     '''
@@ -16,18 +17,22 @@ class Node:
         self.f = g + h
         self.parent = parent # 父节点
 
-    def get_G(self):
+    def get_G(self, start):
         '''
         当前节点到起点的代价
         '''
-        if self.g != 0:
-            return self.g
-        elif self.parent is None:
-            self.g = 0
-        elif self.parent.x == self.x or self.parent.y == self.y:
-            self.g = self.parent.get_G() + 10
-        else:
-            self.g = self.parent.get_G() + 14
+        # if self.g != 0:
+        #     return self.g
+        # elif self.parent is None:
+        #     self.g = 0
+        # elif (self.parent.x == self.x) or (self.parent.y == self.y):
+        #     self.g = self.parent.get_G(start) + 10
+        # else:
+        #     self.g = self.parent.get_G(start) + 14
+        x_dis = self.x - start[0]
+        y_dis = self.y - start[1]
+        
+        self.g = x_dis + y_dis + (math.sqrt(2) - 2) * min(x_dis, y_dis)
         return self.g
     
     def get_H(self, end):
@@ -35,17 +40,20 @@ class Node:
         节点到终点的距离估值
         :param end: 终点坐标(x, y)
         '''
-        if self.h == 0:
-            self.h = self.manhattan(self.x, self.y, end[0], end[1]) * 10
+        # if self.h == 0:
+        #     self.h = self.manhattan(self.x, self.y, end[0], end[1]) * 10
+        x_dis = end[0] - self.x
+        y_dis = end[1] - self.y
+        self.h = x_dis + y_dis + (math.sqrt(2) - 2) * min(x_dis, y_dis)
         return self.h
     
-    def get_F(self, end):
+    def get_F(self, start, end):
         '''
         节点评估值
         :param end: 终点坐标(x, y)
         '''
         if self.f == 0:
-            self.f = self.get_G() + self.get_H(end)
+            self.f = self.get_G(start) + self.get_H(end)
         return self.f
 
     def manhattan(self, from_x, from_y, end_x, end_y):
@@ -117,7 +125,7 @@ class AStar:
         for key, node in self.openlist.items():
             if node_min is None:
                 key_min, node_min = key, node
-            elif node.get_F(self.end) < node_min.get_F(self.end):
+            elif node.get_F(self.start, self.end) < node_min.get_F(self.start, self.end):
                 key_min, node_min = key, node
         if key_min is not None:
             self.openlist.pop(key_min)
@@ -176,7 +184,7 @@ class AStar:
                 if node_openlist is None:
                     self.add_in_openlist(node_Q)
                 # node_Q的F值比node_openlist更小，则用node_Q替换node_openlist
-                elif node_Q.get_F(self.end) < node_openlist.get_F(self.end):
+                elif node_Q.get_F(self.start, self.end) < node_openlist.get_F(self.start, self.end):
                     self.upd_openlist(node_Q)
     
     def run(self):
@@ -201,14 +209,14 @@ class AStar:
         result_y.reverse()
         return result_x, result_y, dis
 
-@MemCache
+# @MemCache
 def get_per_dis(start, end, map2d):
     a_way = AStar(start, end, map2d)
     a_way.run()
     result_x, result_y, dis = a_way.paint()
     return result_x, result_y, dis
 
-@timecost
+# @timecost
 def result_way(alist, map2d):
     p_start = alist[0]
     p_end = alist[-1]
@@ -233,18 +241,25 @@ def result_way(alist, map2d):
 
 if __name__ == "__main__":
     # 15x15 四方格地图
-    map2d = [[0 for _ in range(15)] for _ in range(15)]
-    # 设置障碍
-    for i in range(4, 7):
-        map2d[i][7] = 1
-        map2d[6][i] = 1
-    for i in range(9, 13):
-        map2d[i][4] = 1
-    for i in range(10, 13):
-        map2d[5][i] = 1
-    for i in range(10, 13):
-        map2d[i][10] = 1
-        map2d[10][i] = 1
+    import time
+    start = time.time()
+    map2d = [
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0],
+        [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ]
 
     # 起始点
     start_point = (0, 0)
@@ -259,3 +274,5 @@ if __name__ == "__main__":
         for i in each:
             print(i, end=" ")
         print()
+    end = time.time()
+    print(f"cost: {end-start}")

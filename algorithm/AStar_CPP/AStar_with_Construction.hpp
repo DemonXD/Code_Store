@@ -6,6 +6,7 @@
 #include <map>
 #include <algorithm> // reverse
 #include <stdlib.h> // abs
+#include <time.h>
 
 struct Node
 {
@@ -17,9 +18,9 @@ struct Node
     Node(int x, int y, Node* parent);
     ~Node() {}
     Node operator=(const Node* onode);
-    int get_G();
-    int get_H(std::tuple<int, int> end);
-    int get_F(std::tuple<int, int> end);
+    int get_G(std::tuple<int, int>& start);
+    int get_H(std::tuple<int, int>& end);
+    int get_F(std::tuple<int, int>& start, std::tuple<int, int>& end);
     int manhattan(int from_x, int from_y, int end_x, int end_y);
 };
 
