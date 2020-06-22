@@ -7,6 +7,7 @@
 #include <algorithm> // reverse
 #include <stdlib.h> // abs
 #include <time.h>
+#include <math.h>
 
 struct Node
 {
