@@ -1,4 +1,4 @@
-from algorithm.AStar_有障碍物的网格寻路算法 import *
+from AStar_with_Construction import *
 
 if __name__ == "__main__":
     map2d = [[0]*10 for i in range(14)]
