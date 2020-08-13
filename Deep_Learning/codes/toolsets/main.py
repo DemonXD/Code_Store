@@ -44,43 +44,43 @@ test_datagen = ImageDataGenerator(rescale=1./255)
 train_generator = train_datagen.flow_from_directory(
     train_dir,
     target_size=(150, 150),
-    batch_size=32,
+    batch_size=20,
     class_mode='binary')
 validation_generator = test_datagen.flow_from_directory(
     validation_dir,
     target_size=(150, 150),
-    batch_size=32,
+    batch_size=20,
     class_mode='binary')
 
-history = model.fit_generator(
+history = model.fit(
     train_generator,
     steps_per_epoch=100,
-    epochs=100,
+    epochs=30,
     validation_data=validation_generator,
     validation_steps=50
 )
 
 # 保存模型
-model.save('cats_dogs_small_1.h5')
+model.save('cats_dogs_small.h5')
 
-# 绘制训练过程中的损失曲线和精度曲线
-import matplotlib.pyplot as plt
-acc = history.history['acc']
-val_acc = history.history['val_acc']
-loss = history.history['loss']
-val_loss = history.history['val_loss']
+# # 绘制训练过程中的损失曲线和精度曲线
+# import matplotlib.pyplot as plt
+# acc = history.history['acc']
+# val_acc = history.history['val_acc']
+# loss = history.history['loss']
+# val_loss = history.history['val_loss']
 
-epochs = range(1, len(acc)+1)
-plt.plot(epochs, acc, 'bo', label="Training Acc")
-plt.plot(epochs, val_acc, 'b', label="Validation Acc")
-plt.title("Trainging and validation Accuracy")
-plt.legend()
-plt.figure()
+# epochs = range(1, len(acc)+1)
+# plt.plot(epochs, acc, 'bo', label="Training Acc")
+# plt.plot(epochs, val_acc, 'b', label="Validation Acc")
+# plt.title("Trainging and validation Accuracy")
+# plt.legend()
+# plt.figure()
 
-plt.plot(epochs, loss, 'bo', label="Training Loss")
-plt.plot(epochs, val_loss, 'b', label="Validation Loss")
-plt.title("Training and Validation Loss")
-plt.legend()
-plt.figure()
+# plt.plot(epochs, loss, 'bo', label="Training Loss")
+# plt.plot(epochs, val_loss, 'b', label="Validation Loss")
+# plt.title("Training and Validation Loss")
+# plt.legend()
+# plt.figure()
 
-plt.show()
+# plt.show()
