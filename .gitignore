@@ -132,7 +132,7 @@ dmypy.json
 
 # vscode
 .vscode/
-
+!Sonar_Flappy_Bird/.vscode
 # txt file without requirements.txt
 *.txt
 !requirements.txt
