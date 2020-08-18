@@ -23,6 +23,3 @@ sanic 异步框架的项目架构，完善中......
 
 ### python-official-lib
 记录python基础库的函数
-
-### GoLang
-Go语言练习目录
