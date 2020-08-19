@@ -20,6 +20,7 @@
     "C_Cpp.clang_format_sortIncludes": true,
     "files.associations": {
         "typeinfo": "cpp",
-        "fstream": "cpp"
+        "fstream": "cpp",
+        "iostream": "cpp"
     }, // 格式化时调整include的顺序（按字母排序）
 }

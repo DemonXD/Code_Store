@@ -8,33 +8,20 @@
             "args": [
                 // "${file}",
                 "main.cpp",
-                "AssetManager.cpp",
-                "Game.cpp",
-                "InputManager.cpp",
-                "MainMenuState.cpp",
-                "SplashState.cpp",
-                "StateMachine.cpp",
-                "GameState.cpp",
-                "GameOverState.cpp",
-                "Pipe.cpp",
-                "Land.cpp",
-                "Bird.cpp",
-                "Collision.cpp",
-                "Flash.cpp",
-                "HUD.cpp",
+                "src/baseConcept.cpp",
                 "-o", // 指定输出文件名，不加该参数则默认输出a.exe 
                 // "${fileDirname}/${fileBasenameNoExtension}.exe",
                 "main.exe",
                 "-g", // 生成和调试有关的信息
                 "-Wall", // 开启额外警告
                 "-static-libgcc", // 静态链接 
-                "-IC:/Program Files/SFML-2.5.1/include",
-                "-LC:/Program Files/SFML-2.5.1/lib",
-                "-lsfml-graphics",
-                "-lsfml-window",
-                "-lsfml-system",
+                // "-IC:/Program Files/SFML-2.5.1/include",
+                // "-LC:/Program Files/SFML-2.5.1/lib",
+                // "-lsfml-graphics",
+                // "-lsfml-window",
+                // "-lsfml-system",
                 "-fexec-charset=GBK",
-                "-std=c++11" // c++1z即c++17，C语言最新标准为c11，或根据自己的需要进行修改 
+                "-std=c++1z" // c++1z即c++17，C语言最新标准为c11，或根据自己的需要进行修改 
             ], // 编译命令参数 
             "group": {
                 "kind": "build",
