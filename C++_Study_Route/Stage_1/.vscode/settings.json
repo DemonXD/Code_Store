@@ -21,6 +21,7 @@
     "files.associations": {
         "typeinfo": "cpp",
         "fstream": "cpp",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "ostream": "cpp"
     }, // 格式化时调整include的顺序（按字母排序）
 }

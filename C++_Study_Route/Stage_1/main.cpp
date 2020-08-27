@@ -1,13 +1,17 @@
-#include "headfile/Normal.hpp"
-void VirableConcept();
+#include "headfile/baseConcept.hpp"
+
 
 int main()
 {
-    // testRunBasic();
-    //###regex for ipaddress replace . to [.]####
-    // Solution s;
-    // std::cout << s.defangIPaddr("1.1.1.1") << std::endl;
+    VARS();
+    CONDITIONALOPERATOR();
+    ARRAY();
+    ARRAY2D();
+    // VECTOR(); // need user input
+    ITERATOR();
+    MODULUS();
+    FPPBPP();
     //###########################################
-    std::cout << std::fixed << std::setprecision(2) << 1.2587 << std::endl; // from  include <iomanip>
+    // std::cout << std::fixed << std::setprecision(2) << 1.2587 << std::endl; // from  include <iomanip>
     return 0;
 }
