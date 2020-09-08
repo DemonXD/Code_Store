@@ -13,6 +13,8 @@ void VARS()
     std::cout << "double length: " << sizeof(double) << std::endl;
 }
 
+static const int SALARY = 10000;
+
 void KEYWORD()
 {
     std::cout << "" << std::endl;
