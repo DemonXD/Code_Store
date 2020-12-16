@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 import numpy as np 
 import math
 import time
-import random
 from threading import Thread
 import warnings
 
@@ -94,6 +93,10 @@ class PID:
         self.target = 0
         self.I_limits = (0.1, 0.3)
         self.outpu_limits = (30, 100)
+
+        self.errors = []   # for drawing table
+        self.outputs = []
+        self.timestamps = []
         self.clear()
 
     @property.setter
@@ -128,9 +131,14 @@ class PID:
                 self.output = self.Kp * self.PTerm + \
                               self.Kp * self.ITerm / self.Ki + \
                               self.Kp * self.DTerm * self.Kd
-            self.outpu = self.Kp * self.PTerm + self.Kp * self.DTerm * self.Kd
+            else:
+                self.output = self.Kp * self.PTerm + self.Kp * self.DTerm * self.Kd
             self.output = _clamp(self.output, self.outpu_limits)
     
+    def main(self, feedpoints):
+        pass
+
+
     def draw(self):
         point = 20
         es_time = np.zeros([point]) 
@@ -193,7 +201,13 @@ class INPID:
 
 if __name__ == "__main__":
     try:
-        pid = PID(1.5, 0.5, 0, 1e-3, 100, 1.2, (1.19, 1.21))
-        pid.main()
+        points = None
+        pid = PID(1, 0, 0)
+        pid.T = 1e-3
+        pid.target = 1.2
+        with open("feedback_points.txt", "r") as f:
+            points = [float(each) for each in f.readlines()]
+        assert points is not None, "feedback Points read error!"
+        pid.main(points)
     except KeyboardInterrupt:
         pass
