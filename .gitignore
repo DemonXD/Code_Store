@@ -138,6 +138,7 @@ dmypy.json
 *.txt
 !requirements.txt
 !datasets.txt
+!feedback_points.txt
 
 
 # Mac OS DS_Store

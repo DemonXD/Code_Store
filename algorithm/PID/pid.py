@@ -10,9 +10,10 @@
 
 import matplotlib.pyplot as plt 
 import numpy as np 
-import math
+import random
+import copy
+import sys
 import time
-from threading import Thread
 import warnings
 
 
@@ -89,23 +90,34 @@ class PID:
         self.last_time = 0
         self.output = 0
 
-        self.T = 0
-        self.target = 0
-        self.I_limits = (0.1, 0.3)
+        self._T = 0
+        self._target = 0
+        # 积分项限幅
+        self.windup_guard = (-0.1, 0.1)
+        # 输出限幅
         self.outpu_limits = (30, 100)
+        self.ITerm = 0
 
         self.errors = []   # for drawing table
         self.outputs = []
         self.timestamps = []
         self.clear()
 
-    @property.setter
-    def calcT(self, calc_T):
-        self.T = calc_T
+    @property
+    def T(self):
+        return self._T
 
-    @property.setter
-    def target(self, target):
-        self.target = target
+    @property
+    def target(self):
+        return self._target
+
+    @T.setter
+    def T(self, T_):
+        self._T = T_
+
+    @target.setter
+    def target(self, target_):
+        self._target = target_
 
     def clear(self):
         self.Kp = 0
@@ -114,18 +126,20 @@ class PID:
         self.last_error = 0
         self.last_time = 0
         self.output = 0
-        self.T = 0
+        self._T = 0
         self.target = 0
 
-    def update(self, input_):
+        self.begin_time = _current_time()
+
+    def __call__(self, input_):
         error = self.target - input_
         delta_error = error - self.last_error
         nowtime = _current_time()
-        if nowtime - self.last_time >= self.T:
+        if nowtime - self.last_time >= self._T:
             self.PTerm = error
-            self.ITerm += self.T * error
-            self.ITerm = _clamp(self.ITerm, self.I_limits)
-            self.DTerm = delta_error / self.T
+            self.ITerm += self._T * error
+            self.ITerm = _clamp(self.ITerm, self.windup_guard)
+            self.DTerm = delta_error / self._T
 
             if self.Ki != 0:
                 self.output = self.Kp * self.PTerm + \
@@ -134,47 +148,39 @@ class PID:
             else:
                 self.output = self.Kp * self.PTerm + self.Kp * self.DTerm * self.Kd
             self.output = _clamp(self.output, self.outpu_limits)
+            self.timestamps.append(int((nowtime-self.begin_time)*10000))
+            self.errors.append(error)
+            self.last_error = error
+            self.last_time = nowtime
     
-    def main(self, feedpoints):
-        pass
+    def generateTargetPoints(self):
+        points = None
+        with open("feedback_points.txt", "r") as f:
+            points = [float(each) for each in f.readlines()]
+        assert points is not None, "Failed to read target points!"
+        return points
 
+    def main(self):
+        """
+            假设PID的输出为步进电机的运转频率
+            输入为当前测得的扭矩值
+        """
+        feedpoints = self.generateTargetPoints()
+        feedbackup = copy.deepcopy(feedpoints)
+        for _ in range(500): # 总运行时间
+            # 步骤:
+            # 1. 获取实际的扭矩
+            # 2. 将扭矩值送入PID控制器
+            # 3. 计算输出(电机运转频率)
+            # 4. 电机执行输出
+            try:
+                act_torque = feedbackup.pop(0)
+            except:
+                act_torque = feedpoints[-1] + round(random.uniform(-0.01, 0.01), 3)
+            self(act_torque)
 
-    def draw(self):
-        point = 20
-        es_time = np.zeros([point]) 
-        fig=plt.figure()
-        ax=fig.add_subplot(1,1,1)
+            time.sleep(1e-3)
 
-        ax.set_xlabel('Horizontal Position')
-        ax.set_ylabel('Vertical Position')
-        ax.set_title('Vessel trajectory')
-        
-        line = ax.plot([0,0],[4000,4000],'-g',marker='*')[0]
-        plt.grid(True) #添加网格
-        plt.ion()  #interactive mode on
-        IniObsX=0000
-        IniObsY=4000
-        IniObsAngle=135
-        IniObsSpeed=10*math.sqrt(2)   #米/秒
-        print('开始仿真')
-        obsX = [0,]
-        obsY = [4000,]
-        for t in range(point):
-            t0 = time.time()
-            #障碍物船只轨迹
-            obsX.append(IniObsX+IniObsSpeed*math.sin(IniObsAngle/180*math.pi)*t)
-            obsY.append(IniObsY+IniObsSpeed*math.cos(IniObsAngle/180*math.pi)*t)
-            
-            line.set_xdata(obsX)
-            line.set_ydata(obsY)
-            ax.set_xlim([-200,10*point+200])
-            ax.set_ylim([3800-10*point,4200])
-            #下面的图,两船的距离
-            plt.pause(0.001)
-            es_time[t] = 1000*(time.time() - t0)
-        return es_time
-
-    
 
 class INPID:
     """
@@ -187,27 +193,64 @@ class INPID:
             Pout_t   = Kp*e(t) + Kp*(T/Ti)*Sum(e(t)) + Kp*(Td/T)*(e(t)-e(t-1))
             Pout_t-1 = Kp*e(t-1) + Kp*(T/Ti)*Sum(e(t-1)) + Kp*(Td/T)*(e(t-1)-e(t-2))
             Pout_delta = Kp*(e(t)-e(t-1)) + Kp*(T/Ti)*e(t) + Kp*(Td/T)*(e(t)-2*e(t-1)+e(t-2))
-                        = Kp*e(t) + Kp*(T/Ti)*e(t) + Kp*(Td/T)*e(t) \
+                       = Kp*(e(t)-e(t-1)) + Ki*e(t) + Kd*(e(t)-2*e(t-1)+e(t-2))                 #1
+                       = Kp*e(t) + Kp*(T/Ti)*e(t) + Kp*(Td/T)*e(t) \
                             - (Kp*e(t-1) + Kp*(Td/T)*2*e(t-1)) \
                             + Kp*(Td/T)*e(t-2)
-                        = (Kp+Kp*(T/Ti)+Kp*(Td/T))*e(t) \
-                            - (Kp+2Kp*(Td/T))*e(t-1) \
-                            + Kp*(Td/T)*e(t-2)
-                        = (Kp + Ki + Kd)*e(t) - (Kp + 2Kd)*e(t-1) + Kd*e(t-2)
+                       = (Kp+Kp*(T/Ti)+Kp*(Td/T))*e(t) - (Kp+2Kp*(Td/T))*e(t-1) + Kp*(Td/T)*e(t-2)
     """
-    pass
+    def __init__(self,
+        Kp: float,
+        Ki: float, 
+        Kd: float
+    ) -> None:
+        self.Kp, self.Ki, self.Kd = Kp, Ki, Kd
+        self.last_error = 0
+        self.last1_error = 0
+        self.last2_error = 0
+        self._target = 0
+        self._T = 0
 
+    def clear(self):
+        self.Kp = 0
+        self.Ki = 0
+        self.Kd = 0
+        self.last_error = 0
+        self.last1_error = 0
+        self.last2_error = 0
+
+    @property
+    def T(self):
+        return self._T
+    
+    @property.setter
+    def T(self, nvalue):
+        self._T = nvalue
+
+    @property
+    def target(self):
+        return self._target
+    
+    @property.setter
+    def target(self, nvalue):
+        self._target = nvalue
+
+    
+    def __call__(self, input_):
+        error = self._target - input_
+        output = self.Kp * (error - self.last_error) + self.Ki * error + \
+                    self.Kd * (error - 2*self.last1_error + self.last2_error)
+
+        self.last2_error = self.last1_error
+        self.last1_error = self.last1_error
+        self.last_error = error
 
 
 if __name__ == "__main__":
     try:
-        points = None
-        pid = PID(1, 0, 0)
+        pid = PID(0, 0, 0)
         pid.T = 1e-3
         pid.target = 1.2
-        with open("feedback_points.txt", "r") as f:
-            points = [float(each) for each in f.readlines()]
-        assert points is not None, "feedback Points read error!"
-        pid.main(points)
+        pid.main()
     except KeyboardInterrupt:
-        pass
+        sys.exit(0)
