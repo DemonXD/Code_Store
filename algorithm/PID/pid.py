@@ -140,13 +140,7 @@ class PID:
             self.ITerm += self._T * error
             self.ITerm = _clamp(self.ITerm, self.windup_guard)
             self.DTerm = delta_error / self._T
-
-            if self.Ki != 0:
-                self.output = self.Kp * self.PTerm + \
-                              self.Kp * self.ITerm / self.Ki + \
-                              self.Kp * self.DTerm * self.Kd
-            else:
-                self.output = self.Kp * self.PTerm + self.Kp * self.DTerm * self.Kd
+            self.output = self.Kp * self.PTerm + self.Ki * self.ITerm + self.Kd * self.DTerm
             self.output = _clamp(self.output, self.outpu_limits)
             self.timestamps.append(int((nowtime-self.begin_time)*10000))
             self.errors.append(error)
