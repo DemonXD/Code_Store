@@ -1,7 +1,0 @@
-logs
-__pycache__
-.idea
-.vscode
-venv
-*.txt
-!requirements.txt
