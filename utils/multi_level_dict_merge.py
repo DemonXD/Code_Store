@@ -1,6 +1,6 @@
 import copy
 from typing import Any
-import numpy as np
+# import numpy as np
 
 
 # class DictKeyError(KeyError):
@@ -76,7 +76,8 @@ class MergeDictTool:
                 singlepath = copy.deepcopy(singletemppath) if singletemppath is not None else []
                 if isinstance(val, dict):
                     singlepath.append(key)
-                    self.analysisPath(val, singlepath)
+                    # self.analysisPath(val, singlepath)
+                    yield from self.analysisPath(val, singlepath)
                 else:
                     singlepath.append(key)
                     self.pathlist.append(singlepath)
@@ -92,7 +93,8 @@ class MergeDictTool:
             if not isinstance(val, dict):
                 res[key] = []
             else:
-                res[key] = self.buildblankdict(val)
+                # res[key] = self.buildblankdict(val)
+                res[key] = yield from self.buildblankdict(val)
         return res
 
     def getPathValue(self, singleitem: dict, path: list) -> Any:
@@ -140,10 +142,12 @@ class MergeDictTool:
         """
         for key, val in result.items():
             if isinstance(val, dict):
-                self.statistic(val)
+                # self.statistic(val)
+                yield from self.statistic(val)
             elif isinstance(val, list):
                 if all([isinstance(each, (int, float)) for each in val]):
-                    result[key] = [min(val), np.median(val), max(val)]
+                    # result[key] = [min(val), np.median(val), max(val)]
+                    result[key] = [min(val), sorted(val)[len(val)//2], max(val)]
                 else:
                     raise ItemTypeError
 
@@ -224,6 +228,6 @@ if __name__ == "__main__":
         },
     ]
     
-    print(MergeDictTool(single_sample).mergeAndCalculate())
-    print(MergeDictTool(sample).mergeAndCalculate())
+    print(list(MergeDictTool(single_sample).mergeAndCalculate()))
+    print(list(MergeDictTool(sample).mergeAndCalculate()))
     # ins = MergeDictTool(sample2).mergeAndCalculate()
