@@ -102,9 +102,9 @@ for cn in range(0,3):
 if not cam.isOpened():
     sys.stderr.write('ERROR: Did not open a camera.\n')
     sys.exit(1)
-print ("Running with camera number %d." % cn)
-print type(cam)
-print str(cam)
+print("Running with camera number %d." % cn)
+print(type(cam))
+print(str(cam))
 #time.sleep(20)
 # 76800 pixels
 #cam.set(3,640)
