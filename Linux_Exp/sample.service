@@ -1,0 +1,18 @@
+[Unit]
+Description=AutoClocked Service
+After=multi-user.target
+ 
+[Service]
+Type=forking
+PIDFile=/path/to/sample.pid
+ExecStart=/path/to/python /path/to/sample.py
+ExecReload=kill -9 `cat /path/to/sample.pid` && /path/to/python /path/to/sample.py
+EexcStop=kill -9 `cat /path/to/sample.pid`
+
+[Install]
+WantedBy=multi-user.target
+
+# sudo chmod 644 /lib/systemd/system/autorun.service
+
+#sudo systemctl daemon-reload
+#sudo systemctl enable autorun.service
