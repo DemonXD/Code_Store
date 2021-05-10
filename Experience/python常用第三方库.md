@@ -42,35 +42,84 @@
     python calculator.py double --number=15  # 30
     ```
 - Arrow(聪明操作时间的库)
-```Python
-import arrow
-arrow.get('2013-05-11T21:23:58.970460+07:00')
-# <Arrow [2013-05-11T21:23:58.970460+07:00]>
+    ```Python
+    import arrow
+    arrow.get('2013-05-11T21:23:58.970460+07:00')
+    # <Arrow [2013-05-11T21:23:58.970460+07:00]>
 
-utc = arrow.utcnow()
-utc
-# <Arrow [2013-05-11T21:23:58.970460+00:00]>
+    utc = arrow.utcnow()
+    utc
+    # <Arrow [2013-05-11T21:23:58.970460+00:00]>
 
-utc = utc.shift(hours=-1)
-utc
-# <Arrow [2013-05-11T20:23:58.970460+00:00]>
+    utc = utc.shift(hours=-1)
+    utc
+    # <Arrow [2013-05-11T20:23:58.970460+00:00]>
 
-local = utc.to('US/Pacific')
-local
-# <Arrow [2013-05-11T13:23:58.970460-07:00]>
+    local = utc.to('US/Pacific')
+    local
+    # <Arrow [2013-05-11T13:23:58.970460-07:00]>
 
-local.timestamp()
-# 1368303838.970460
+    local.timestamp()
+    # 1368303838.970460
 
-local.format()
-# '2013-05-11 13:23:58 -07:00'
+    local.format()
+    # '2013-05-11 13:23:58 -07:00'
 
-local.format('YYYY-MM-DD HH:mm:ss ZZ')
-# '2013-05-11 13:23:58 -07:00'
+    local.format('YYYY-MM-DD HH:mm:ss ZZ')
+    # '2013-05-11 13:23:58 -07:00'
 
-local.humanize()
-# 'an hour ago'
+    local.humanize()
+    # 'an hour ago'
 
-# local.humanize(locale='ko-kr')
-# '한시간 전'
-```
+    # local.humanize(locale='ko-kr')
+    # '한시간 전'
+    ```
+- marshmallow/Pydantic(序列化，反序列化对象库)  
+    - 可以用于固定参数的校验
+    - 数据库存储中间对象
+    ```Python
+    ########### marshmallow
+    from pprint import pprint
+    from marshmallow import Schema, fields, ValidationError
+
+    class UserSchema(Schema):
+        name = fields.String(required=True)
+        age = fields.Integer(required=True, error_messages={'required': 'Age is required.'})
+        city = fields.String(
+            required=True,
+            error_messages={'required': {'message': 'City required', 'code': 400}},
+        )
+        email = fields.Email()
+
+    try:
+        result = UserSchema().load({'email': 'foo@bar.com'})
+    except ValidationError as err:
+        pprint(err.messages)
+
+    ############ Pydantic
+    from pydantic import BaseModel, ValidationError, validator
+
+
+    class UserModel(BaseModel):
+        name: str
+        username: str
+        password1: str
+        password2: str
+
+        @validator('name')
+        def name_must_contain_space(cls, v):
+            if ' ' not in v:
+                raise ValueError('must contain a space')
+            return v.title()
+
+        @validator('password2')
+        def passwords_match(cls, v, values, **kwargs):
+            if 'password1' in values and v != values['password1']:
+                raise ValueError('passwords do not match')
+            return v
+
+        @validator('username')
+        def username_alphanumeric(cls, v):
+            assert v.isalnum(), 'must be alphanumeric'
+            return v
+    ```
