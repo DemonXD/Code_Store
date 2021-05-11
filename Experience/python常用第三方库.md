@@ -74,6 +74,7 @@
     # local.humanize(locale='ko-kr')
     # '한시간 전'
     ```
+
 - marshmallow/Pydantic(序列化，反序列化对象库)  
     - 可以用于固定参数的校验
     - 数据库存储中间对象
@@ -122,4 +123,15 @@
         def username_alphanumeric(cls, v):
             assert v.isalnum(), 'must be alphanumeric'
             return v
+    ```
+
+- glob(遍历文件夹的库)
+    ```Python
+    import glob
+    path = /target/path
+    # recursive 逐级遍历
+    # 第一个** 表示该目录下所有的目录
+    # 第二个* 表示所有xlsx类型的文件
+    for file in glob(f"{path}/**/*.xlsx", recursive=True):
+        pass
     ```
