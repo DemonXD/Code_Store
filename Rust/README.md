@@ -7,3 +7,11 @@
     cargo check # check code
     cargo run # build and run code
     ```
+
+- 2. basic knowledge
+    >run code:
+    ```Shell
+    cd Rust/2-basicKnowledge
+    cargo check
+    cargo run
+    ```
