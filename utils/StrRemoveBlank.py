@@ -12,7 +12,7 @@ def process(input_str: str) -> str:
     Desc.:
         use re
     """
-    pattern_rm_blank_within_cn = re.compile(r"([\u4e00-\u9fa5]+)\s+([\u4e00-\u9fa5]+)", re.S)
+    pattern_rm_blank_within_cn = re.compile(r"([\u4e00-\u9fa5]+)\s+([\u4e00-\u9fa5]+)", re.S | re.M)
     pattern_rm_multi_blank = re.compile(r"\s+", re.S)
     str1 = input_str.strip()
     str2 = re.sub(pattern_rm_multi_blank, " ", str1)
@@ -35,6 +35,6 @@ def process_algo(input_str: str) -> str:
 
 
 if __name__ == "__main__":
-    a = "abc   a 哦 abc abc    abc 你    他  我 "
-    print(process(a))
-    process_algo(a)
+    a = "abc   a 哦 abc abc    abc 你谁    他  我 "
+    print(f"|{process(a)}|")
+    print(f"|{process_algo(a)}|")
