@@ -135,3 +135,19 @@
     for file in glob(f"{path}/**/*.xlsx", recursive=True):
         pass
     ```
+
+- librose(音频处理)
+    ```Python
+    import librosa
+    audio_path = '../T08-violin.wav'
+    x , sr = librosa.load(audio_path)
+
+    print(type(x), type(sr))
+    # <class 'numpy.ndarray'> <class 'int'>
+
+    print(x.shape, sr)
+    # (396688,) 22050
+
+    # 以44.1KHz重新采样
+    librosa.load(audio_path, sr=44100)
+    ```
